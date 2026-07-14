@@ -11,6 +11,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "prisma:generate": "prisma generate",
+    "security:audit": "npm audit --audit-level=moderate",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
@@ -93,6 +94,10 @@
     "tsx": "^4.23.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1"
+  },
+  "overrides": {
+    "@hono/node-server": "^1.19.13",
+    "postcss": "^8.5.10"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
