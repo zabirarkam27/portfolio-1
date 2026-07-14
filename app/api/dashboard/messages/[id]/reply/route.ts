@@ -30,11 +30,18 @@ export async function POST(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const message = await prisma.contactMessage.findUniqueOrThrow({ where: { id } });
 
-  await sendReplyEmail({
-    to: message.email,
-    subject: result.data.subject,
-    text: result.data.body,
-  });
+  try {
+    await sendReplyEmail({
+      to: message.email,
+      subject: result.data.subject,
+      text: result.data.body,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Reply email could not be sent" },
+      { status: 500 },
+    );
+  }
 
   const updated = await prisma.contactMessage.update({
     where: { id },
