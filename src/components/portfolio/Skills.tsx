@@ -1,50 +1,18 @@
 import { motion } from "framer-motion";
+import type { SkillGroup } from "@/lib/content-types";
 import { SectionHeader } from "./SectionHeader";
 
-const groups = [
-  {
-    label: "Frontend",
-    tag: "UI · UX · Motion",
-    items: [
-      { name: "React / Next", lvl: 96 },
-      { name: "TypeScript", lvl: 94 },
-      { name: "Tailwind & CSS", lvl: 92 },
-      { name: "Framer Motion", lvl: 85 },
-    ],
-  },
-  {
-    label: "Backend",
-    tag: "APIs · Data · Systems",
-    items: [
-      { name: "Node & Bun", lvl: 92 },
-      { name: "PostgreSQL", lvl: 88 },
-      { name: "Rust", lvl: 70 },
-      { name: "gRPC / tRPC", lvl: 82 },
-    ],
-  },
-  {
-    label: "Tools",
-    tag: "Infra · Design · DX",
-    items: [
-      { name: "AWS / Cloudflare", lvl: 85 },
-      { name: "Docker / K8s", lvl: 78 },
-      { name: "Figma", lvl: 80 },
-      { name: "Git / CI", lvl: 95 },
-    ],
-  },
-];
-
-const tags = [
-  "REST", "GraphQL", "Postgres", "Redis", "Prisma", "Zod", "Vitest", "Playwright",
-  "Stripe", "OAuth", "WebSockets", "OpenAI", "S3", "Terraform", "Vercel", "Cloudflare",
-];
-
-export function Skills() {
+export function Skills({ groups, tags }: { groups: SkillGroup[]; tags: string[] }) {
   return (
     <section id="skills" className="relative border-y border-border bg-surface/40 py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionHeader index="02 / Skills" eyebrow="Toolbox" title={<>Sharp on the front, calm on the back.</>}>
-          A working stack, not a shopping list. Below is what I actually reach for on Monday mornings.
+        <SectionHeader
+          index="02 / Skills"
+          eyebrow="Toolbox"
+          title={<>Sharp on the front, calm on the back.</>}
+        >
+          A working stack, not a shopping list. Below is what I actually reach for on Monday
+          mornings.
         </SectionHeader>
 
         <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">

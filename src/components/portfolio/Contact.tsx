@@ -1,24 +1,46 @@
 import { motion } from "framer-motion";
 import { Mail, Phone, MessageCircle, ArrowUpRight } from "lucide-react";
+import type { ContactInfo } from "@/generated/prisma/client";
 import { SectionHeader } from "./SectionHeader";
 
-export function Contact() {
+export function Contact({ contactInfo }: { contactInfo: ContactInfo }) {
+  const channels = [
+    {
+      icon: Mail,
+      label: "Email",
+      value: contactInfo.email,
+      href: `mailto:${contactInfo.email}`,
+    },
+    {
+      icon: Phone,
+      label: "Phone",
+      value: contactInfo.phone,
+      href: `tel:${contactInfo.phone.replace(/\s/g, "")}`,
+    },
+    {
+      icon: MessageCircle,
+      label: "WhatsApp",
+      value: "Message me →",
+      href: contactInfo.whatsapp,
+    },
+  ];
+
   return (
     <section id="contact" className="relative border-t border-border py-24 sm:py-32">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-primary/10 to-transparent" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionHeader index="06 / Contact" eyebrow="Let's talk" title={<>Have a project in mind, or just a good idea?</>}>
+        <SectionHeader
+          index="06 / Contact"
+          eyebrow="Let's talk"
+          title={<>Have a project in mind, or just a good idea?</>}
+        >
           Currently taking on one new engagement for Q4 — engineering, product, or both.
         </SectionHeader>
 
         <div className="mt-16 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1.2fr]">
           {/* Left: channels */}
           <div className="space-y-3">
-            {[
-              { icon: Mail, label: "Email", value: "hello@ari.dev", href: "mailto:hello@ari.dev" },
-              { icon: Phone, label: "Phone", value: "+351 910 000 000", href: "tel:+351910000000" },
-              { icon: MessageCircle, label: "WhatsApp", value: "Message me →", href: "#" },
-            ].map((c) => (
+            {channels.map((c) => (
               <a
                 key={c.label}
                 href={c.href}
@@ -40,7 +62,9 @@ export function Contact() {
             ))}
 
             <div className="mt-6 rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
-              <div className="font-display text-sm font-semibold text-foreground">Typical response</div>
+              <div className="font-display text-sm font-semibold text-foreground">
+                Typical response
+              </div>
               Within 24 hours on weekdays. I read every message.
             </div>
           </div>
@@ -83,7 +107,17 @@ export function Contact() {
   );
 }
 
-function Field({ label, placeholder, type = "text", className = "" }: { label: string; placeholder: string; type?: string; className?: string }) {
+function Field({
+  label,
+  placeholder,
+  type = "text",
+  className = "",
+}: {
+  label: string;
+  placeholder: string;
+  type?: string;
+  className?: string;
+}) {
   return (
     <div className={className}>
       <label className="mb-2 block font-mono-tight text-[10px] uppercase tracking-widest text-muted-foreground">

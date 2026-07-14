@@ -1,52 +1,22 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
+import type { Experience as ExperienceRecord } from "@/generated/prisma/client";
 import { SectionHeader } from "./SectionHeader";
 
-const roles = [
-  {
-    range: "2024 — Now",
-    company: "Northwind Labs",
-    role: "Senior Full‑Stack Engineer",
-    location: "Remote · EU",
-    bullets: [
-      "Lead engineer on a payments‑adjacent product processing 2M+ tx/mo.",
-      "Migrated legacy monolith to a modular Turbo/Bun setup — CI 4× faster.",
-      "Owned end‑to‑end delivery of a new dashboard suite (Figma → prod).",
-    ],
-    stack: "TypeScript · Bun · Postgres · Cloudflare · Tailwind",
-  },
-  {
-    range: "2022 — 2024",
-    company: "Studio Halcyon",
-    role: "Product Engineer",
-    location: "Lisbon",
-    bullets: [
-      "Shipped 12 client products across fintech, cultural & DTC brands.",
-      "Built the studio's internal component & motion system (used across 40+ projects).",
-      "Mentored two junior engineers into confident mid‑levels.",
-    ],
-    stack: "Next.js · Prisma · Framer Motion · Vercel",
-  },
-  {
-    range: "2020 — 2022",
-    company: "Kernel & Co.",
-    role: "Full‑Stack Developer",
-    location: "Porto",
-    bullets: [
-      "Second engineering hire at a Series A startup (0 → 40k users).",
-      "Owned auth, billing, and the internal admin platform end‑to‑end.",
-    ],
-    stack: "Node · React · Postgres · AWS",
-  },
-];
-
-export function Experience() {
+export function Experience({ roles }: { roles: ExperienceRecord[] }) {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section id="experience" className="relative border-y border-border bg-surface/40 py-24 sm:py-32">
+    <section
+      id="experience"
+      className="relative border-y border-border bg-surface/40 py-24 sm:py-32"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionHeader index="04 / Experience" eyebrow="Track record" title={<>Roles, receipts, and the things I actually shipped.</>} />
+        <SectionHeader
+          index="04 / Experience"
+          eyebrow="Track record"
+          title={<>Roles, receipts, and the things I actually shipped.</>}
+        />
 
         <div className="mt-16">
           {roles.map((r, i) => {
@@ -99,7 +69,9 @@ export function Experience() {
                               </li>
                             ))}
                           </ul>
-                          <p className="mt-5 font-mono-tight text-xs text-muted-foreground">{r.stack}</p>
+                          <p className="mt-5 font-mono-tight text-xs text-muted-foreground">
+                            {r.stack}
+                          </p>
                         </div>
                       </div>
                     </motion.div>

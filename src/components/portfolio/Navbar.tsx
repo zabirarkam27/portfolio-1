@@ -111,7 +111,10 @@ export function Navbar() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[60] md:hidden"
           >
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setOpen(false)} />
+            <div
+              className="absolute inset-0 bg-background/80 backdrop-blur-md"
+              onClick={() => setOpen(false)}
+            />
             <motion.aside
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -140,9 +143,7 @@ export function Navbar() {
                     className="group flex items-baseline justify-between border-b border-border/60 py-4 font-display text-3xl font-semibold tracking-tight"
                   >
                     <span className="transition-colors group-hover:text-primary">{l.label}</span>
-                    <span className="font-mono-tight text-xs text-muted-foreground">
-                      0{i + 1}
-                    </span>
+                    <span className="font-mono-tight text-xs text-muted-foreground">0{i + 1}</span>
                   </motion.a>
                 ))}
               </nav>

@@ -1,11 +1,19 @@
 import { motion } from "framer-motion";
-import about from "@/assets/about.jpg";
+import type { AboutContent } from "@/lib/content-types";
 import { SectionHeader } from "./SectionHeader";
 
-export function About() {
+export function About({ aboutMe }: { aboutMe: AboutContent }) {
   return (
     <section id="about" className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32">
-      <SectionHeader index="01 / About" eyebrow="The human" title={<>A generalist who <span className="italic text-primary">still</span> loves the craft.</>}>
+      <SectionHeader
+        index="01 / About"
+        eyebrow="The human"
+        title={
+          <>
+            A generalist who <span className="italic text-primary">still</span> loves the craft.
+          </>
+        }
+      >
         Six years of shipping — half in a two‑person startup, half in a design‑led agency.
       </SectionHeader>
 
@@ -20,7 +28,7 @@ export function About() {
           <div className="relative">
             <div className="absolute -inset-4 rounded-3xl bg-primary/10 blur-2xl" />
             <img
-              src={about}
+              src={aboutMe.imageUrl}
               alt="Workspace"
               width={1024}
               height={1280}
@@ -29,7 +37,7 @@ export function About() {
             />
             <div className="absolute -bottom-4 -right-4 rounded-2xl border border-border bg-background px-4 py-3 font-mono-tight text-xs">
               <span className="text-muted-foreground">since</span>{" "}
-              <span className="text-foreground">2019</span>
+              <span className="text-foreground">{aboutMe.since}</span>
             </div>
           </div>
         </motion.div>
@@ -42,8 +50,7 @@ export function About() {
             transition={{ duration: 0.6 }}
             className="text-2xl leading-relaxed text-balance sm:text-3xl"
           >
-            I write software the way a carpenter finishes a joint you'll never see —
-            not because anyone will notice, but because <span className="text-primary">I would</span>.
+            {aboutMe.paragraphs[0]}
           </motion.p>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -52,10 +59,7 @@ export function About() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-muted-foreground"
           >
-            I started with a hand‑me‑down ThinkPad and a physics degree that quietly turned
-            into a career in code. Today I move between typed backends, design systems, and
-            infrastructure — and I'm happiest at the seam between them, where the interesting
-            trade‑offs live.
+            {aboutMe.paragraphs[1]}
           </motion.p>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -64,21 +68,16 @@ export function About() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-muted-foreground"
           >
-            Off the keyboard: film photography, brutalist architecture, and the ongoing
-            search for a decent flat‑white north of the river.
+            {aboutMe.paragraphs[2]}
           </motion.p>
 
           <div className="grid grid-cols-2 gap-4 pt-4 sm:grid-cols-3">
-            {[
-              { k: "Focus", v: "Product engineering" },
-              { k: "Stack", v: "TS · Node · Postgres" },
-              { k: "Timezone", v: "GMT +1" },
-            ].map((i) => (
-              <div key={i.k} className="rounded-2xl border border-border bg-surface/50 p-4">
+            {aboutMe.facts.map((i) => (
+              <div key={i.key} className="rounded-2xl border border-border bg-surface/50 p-4">
                 <div className="font-mono-tight text-[10px] uppercase tracking-widest text-muted-foreground">
-                  {i.k}
+                  {i.key}
                 </div>
-                <div className="mt-1 text-sm font-medium">{i.v}</div>
+                <div className="mt-1 text-sm font-medium">{i.value}</div>
               </div>
             ))}
           </div>

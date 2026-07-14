@@ -1,32 +1,25 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+"use client";
+
 import { motion } from "framer-motion";
-import { ArrowLeft, ExternalLink, Github, ArrowUpRight } from "lucide-react";
-import { Navbar } from "@/components/portfolio/Navbar";
+import Link from "next/link";
+import { ArrowLeft, ArrowUpRight, ExternalLink, Github } from "lucide-react";
+
 import { Footer } from "@/components/portfolio/Footer";
-import { projects } from "@/components/portfolio/Projects";
+import { Navbar } from "@/components/portfolio/Navbar";
+import type { SocialLink } from "@/generated/prisma/client";
+import type { ProfileContent, ProjectContent } from "@/lib/content-types";
 
-export const Route = createFileRoute("/projects/$slug")({
-  loader: ({ params }) => {
-    const project = projects.find((p) => p.slug === params.slug);
-    if (!project) throw notFound();
-    return { project };
-  },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: loaderData ? `${loaderData.project.title} — Ari Novak` : "Project" },
-      { name: "description", content: loaderData?.project.desc ?? "" },
-    ],
-  }),
-  component: ProjectPage,
-  notFoundComponent: () => (
-    <div className="grid min-h-screen place-items-center text-muted-foreground">
-      Project not found.
-    </div>
-  ),
-});
-
-function ProjectPage() {
-  const { project } = Route.useLoaderData();
+export function ProjectDetail({
+  profile,
+  project,
+  socialLinks,
+}: {
+  profile: ProfileContent;
+  project: ProjectContent;
+  socialLinks: SocialLink[];
+}) {
+  const challenges = project.challenges.split("\n").filter(Boolean);
+  const futurePlans = project.futurePlans.split("\n").filter(Boolean);
 
   return (
     <div className="min-h-screen bg-background text-foreground grain">
@@ -34,7 +27,7 @@ function ProjectPage() {
 
       <article className="mx-auto max-w-5xl px-4 pt-32 pb-16 sm:px-6 sm:pt-40">
         <Link
-          to="/"
+          href="/"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" /> Back to work
@@ -52,19 +45,19 @@ function ProjectPage() {
             <span>{project.tag}</span>
           </div>
           <h1 className="mt-6 font-display text-5xl font-semibold tracking-tight sm:text-7xl">
-            {project.title}
+            {project.name}
           </h1>
-          <p className="mt-6 max-w-2xl text-lg text-muted-foreground">{project.desc}</p>
+          <p className="mt-6 max-w-2xl text-lg text-muted-foreground">{project.summary}</p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <a
-              href="#"
+              href={project.liveUrl ?? "#"}
               className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
             >
               Visit live site <ExternalLink className="h-4 w-4" />
             </a>
             <a
-              href="#"
+              href={project.githubUrl ?? "#"}
               className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-medium transition-colors hover:border-foreground"
             >
               <Github className="h-4 w-4" /> Source
@@ -79,15 +72,14 @@ function ProjectPage() {
           className="mt-14 overflow-hidden rounded-3xl border border-border"
         >
           <img
-            src={project.img}
-            alt={project.title}
+            src={project.imageUrl}
+            alt={project.name}
             width={1200}
             height={800}
             className="w-full"
           />
         </motion.div>
 
-        {/* Meta grid */}
         <div className="mt-14 grid grid-cols-2 gap-6 border-y border-border py-8 sm:grid-cols-4">
           <Meta k="Role" v="Lead engineer" />
           <Meta k="Timeline" v="9 months" />
@@ -100,12 +92,12 @@ function ProjectPage() {
             Stack
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {project.stack.map((s: string) => (
+            {project.techStack.map((item) => (
               <span
-                key={s}
+                key={item}
                 className="rounded-full border border-border bg-surface/40 px-3 py-1.5 text-xs text-foreground/85"
               >
-                {s}
+                {item}
               </span>
             ))}
           </div>
@@ -114,22 +106,22 @@ function ProjectPage() {
         <Block title="The brief">
           The team came in with a messy internal reporting stack, six overlapping tools, and no
           single source of truth. My job was to design and build a calm, opinionated analytics
-          surface — one that respected keyboards, respected attention, and got out of the way.
+          surface - one that respected keyboards, respected attention, and got out of the way.
         </Block>
 
         <div className="mt-14 grid gap-6 md:grid-cols-2">
           <Callout title="Challenges" tint>
             <ul className="space-y-2">
-              <li>· Streaming millions of events per hour without UI jank.</li>
-              <li>· A design language flexible enough for dashboards, tables, and long‑form.</li>
-              <li>· Onboarding a legacy team without breaking their muscle memory.</li>
+              {challenges.map((challenge) => (
+                <li key={challenge}>{challenge}</li>
+              ))}
             </ul>
           </Callout>
           <Callout title="Future improvements">
             <ul className="space-y-2">
-              <li>· Native command palette + saved views.</li>
-              <li>· Local‑first sync so the app opens instantly, offline.</li>
-              <li>· Deeper primitives for annotation and shared context.</li>
+              {futurePlans.map((plan) => (
+                <li key={plan}>{plan}</li>
+              ))}
             </ul>
           </Callout>
         </div>
@@ -137,7 +129,7 @@ function ProjectPage() {
         <div className="mt-20 flex items-center justify-between border-t border-border pt-8">
           <div className="font-mono-tight text-xs text-muted-foreground">Next project</div>
           <Link
-            to="/"
+            href="/"
             className="group inline-flex items-center gap-2 font-display text-2xl font-semibold hover:text-primary sm:text-3xl"
           >
             Back to index
@@ -146,7 +138,7 @@ function ProjectPage() {
         </div>
       </article>
 
-      <Footer />
+      <Footer profile={profile} socialLinks={socialLinks} />
     </div>
   );
 }
@@ -171,7 +163,15 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-function Callout({ title, children, tint = false }: { title: string; children: React.ReactNode; tint?: boolean }) {
+function Callout({
+  title,
+  children,
+  tint = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  tint?: boolean;
+}) {
   return (
     <div
       className={
@@ -180,7 +180,9 @@ function Callout({ title, children, tint = false }: { title: string; children: R
       }
     >
       <div className="flex items-center gap-2">
-        <span className={"h-1.5 w-1.5 rounded-full " + (tint ? "bg-primary" : "bg-muted-foreground")} />
+        <span
+          className={"h-1.5 w-1.5 rounded-full " + (tint ? "bg-primary" : "bg-muted-foreground")}
+        />
         <div className="font-mono-tight text-[10px] uppercase tracking-widest text-muted-foreground">
           {title}
         </div>

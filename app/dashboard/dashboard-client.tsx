@@ -1,0 +1,851 @@
+"use client";
+
+import {
+  BriefcaseBusiness,
+  Contact,
+  FileText,
+  GraduationCap,
+  ImageIcon,
+  KeyRound,
+  Layers3,
+  LinkIcon,
+  LogOut,
+  Plus,
+  Save,
+  Trash2,
+  UserRound,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
+import { useForm, type UseFormRegisterReturn } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { uploadAsset } from "@/lib/blob-client";
+import type { HomeContent } from "@/lib/content-types";
+import type { UploadKind } from "@/lib/upload-assets";
+import { zodFormResolver } from "@/lib/zod-form-resolver";
+
+type SectionKey =
+  | "profile"
+  | "about"
+  | "socials"
+  | "skills"
+  | "education"
+  | "experience"
+  | "projects"
+  | "contact"
+  | "security";
+
+type Row = Record<string, unknown> & { id?: string; order?: number };
+
+const sections: Array<{ key: SectionKey; label: string; icon: React.ElementType }> = [
+  { key: "profile", label: "Profile", icon: UserRound },
+  { key: "about", label: "About", icon: FileText },
+  { key: "socials", label: "Social links", icon: LinkIcon },
+  { key: "skills", label: "Skills", icon: Layers3 },
+  { key: "education", label: "Education", icon: GraduationCap },
+  { key: "experience", label: "Experience", icon: BriefcaseBusiness },
+  { key: "projects", label: "Projects", icon: ImageIcon },
+  { key: "contact", label: "Contact", icon: Contact },
+  { key: "security", label: "Security", icon: KeyRound },
+];
+
+export function DashboardClient({
+  adminEmail,
+  initialContent,
+}: {
+  adminEmail: string;
+  initialContent: HomeContent;
+}) {
+  const router = useRouter();
+  const [active, setActive] = useState<SectionKey>("profile");
+  const [content, setContent] = useState(initialContent);
+  const [isPending, startTransition] = useTransition();
+
+  async function saveContent(nextContent = content) {
+    const response = await fetch("/api/dashboard/content", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(nextContent),
+    });
+
+    if (!response.ok) {
+      const data = (await response.json()) as { error?: string };
+      toast.error(data.error ?? "Save failed");
+      return;
+    }
+
+    const saved = (await response.json()) as HomeContent & { admin: { email: string } };
+    setContent(saved);
+    toast.success("Saved");
+  }
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/dashboard/login");
+    router.refresh();
+  }
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-card/70 p-4 backdrop-blur lg:block">
+        <div className="mb-6 px-2">
+          <div className="font-display text-xl font-semibold">Portfolio Admin</div>
+          <div className="mt-1 truncate text-xs text-muted-foreground">{adminEmail}</div>
+        </div>
+        <nav className="space-y-1">
+          {sections.map((section) => (
+            <button
+              key={section.key}
+              onClick={() => setActive(section.key)}
+              className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                active === section.key
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <section.icon className="h-4 w-4" />
+              {section.label}
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      <main className="lg:pl-64">
+        <header className="sticky top-0 z-20 border-b border-border bg-background/90 px-4 py-3 backdrop-blur sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 className="font-display text-2xl font-semibold">
+                {sections.find((section) => section.key === active)?.label}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Edit live portfolio content from NeonDB.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => startTransition(() => void saveContent())}
+                disabled={isPending}
+              >
+                <Save className="h-4 w-4" />
+                {isPending ? "Saving..." : "Save all"}
+              </Button>
+              <Button variant="outline" onClick={logout}>
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          </div>
+          <div className="mt-4 flex gap-2 overflow-x-auto lg:hidden">
+            {sections.map((section) => (
+              <Button
+                key={section.key}
+                size="sm"
+                variant={active === section.key ? "default" : "outline"}
+                onClick={() => setActive(section.key)}
+              >
+                {section.label}
+              </Button>
+            ))}
+          </div>
+        </header>
+
+        <div className="mx-auto max-w-6xl p-4 sm:p-6">
+          {active === "profile" && <ProfilePanel content={content} setContent={setContent} />}
+          {active === "about" && <AboutPanel content={content} setContent={setContent} />}
+          {active === "socials" && (
+            <CollectionPanel
+              title="Social links"
+              rows={content.socialLinks}
+              setRows={(rows) =>
+                setContent({ ...content, socialLinks: rows as HomeContent["socialLinks"] })
+              }
+              fields={[
+                ["platform", "Platform"],
+                ["url", "URL"],
+                ["order", "Order"],
+              ]}
+            />
+          )}
+          {active === "skills" && (
+            <CollectionPanel
+              title="Skills"
+              rows={content.skillRows}
+              setRows={(rows) =>
+                setContent({ ...content, skillRows: rows as HomeContent["skillRows"] })
+              }
+              fields={[
+                ["name", "Name"],
+                ["category", "Category"],
+                ["proficiency", "Proficiency"],
+                ["tag", "Group subtitle"],
+                ["icon", "Icon"],
+                ["order", "Order"],
+              ]}
+            />
+          )}
+          {active === "education" && (
+            <CollectionPanel
+              title="Education"
+              rows={content.education}
+              setRows={(rows) =>
+                setContent({ ...content, education: rows as HomeContent["education"] })
+              }
+              fields={[
+                ["year", "Year"],
+                ["school", "School"],
+                ["degree", "Degree"],
+                ["note", "Note"],
+                ["icon", "Icon"],
+                ["order", "Order"],
+              ]}
+            />
+          )}
+          {active === "experience" && <ExperiencePanel content={content} setContent={setContent} />}
+          {active === "projects" && <ProjectPanel content={content} setContent={setContent} />}
+          {active === "contact" && <ContactPanel content={content} setContent={setContent} />}
+          {active === "security" && <SecurityPanel adminEmail={adminEmail} />}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function CardShell({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+      <h2 className="mb-4 font-display text-xl font-semibold">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function ProfilePanel({
+  content,
+  setContent,
+}: {
+  content: HomeContent;
+  setContent: (content: HomeContent) => void;
+}) {
+  const profile = content.profile;
+  const statsText = profile.stats.map((stat) => `${stat.key}: ${stat.value}`).join("\n");
+
+  function update(key: keyof typeof profile, value: unknown) {
+    setContent({ ...content, profile: { ...profile, [key]: value } });
+  }
+
+  return (
+    <CardShell title="Profile & hero">
+      <div className="grid gap-4 md:grid-cols-2">
+        <TextInput label="Name" value={profile.name} onChange={(value) => update("name", value)} />
+        <TextInput
+          label="Designation"
+          value={profile.designation}
+          onChange={(value) => update("designation", value)}
+        />
+        <TextInput
+          label="Headline"
+          value={profile.headline}
+          onChange={(value) => update("headline", value)}
+        />
+        <TextInput
+          label="Availability"
+          value={profile.availability}
+          onChange={(value) => update("availability", value)}
+        />
+        <TextInput
+          label="Location"
+          value={profile.location}
+          onChange={(value) => update("location", value)}
+        />
+        <TextInput
+          label="Current company"
+          value={profile.currentCompany}
+          onChange={(value) => update("currentCompany", value)}
+        />
+        <TextInput
+          label="Photo URL"
+          value={profile.photoUrl}
+          onChange={(value) => update("photoUrl", value)}
+        />
+        <TextInput
+          label="Resume URL"
+          value={profile.resumeUrl}
+          onChange={(value) => update("resumeUrl", value)}
+        />
+        <TextInput
+          label="Footer tagline"
+          value={profile.footerTagline}
+          onChange={(value) => update("footerTagline", value)}
+        />
+        <TextAreaInput
+          label="Tagline"
+          value={profile.tagline}
+          onChange={(value) => update("tagline", value)}
+        />
+        <TextAreaInput
+          label="Stats, one per line as key: value"
+          value={statsText}
+          onChange={(value) =>
+            update(
+              "stats",
+              value
+                .split("\n")
+                .filter(Boolean)
+                .map((line) => {
+                  const [key, ...rest] = line.split(":");
+                  return { key: key.trim(), value: rest.join(":").trim() };
+                }),
+            )
+          }
+        />
+        <div className="space-y-4">
+          <UploadControl
+            accept="image/jpeg,image/png,image/webp"
+            kind="profile-photo"
+            label="Upload profile photo"
+            previewUrl={profile.photoUrl}
+            onUploaded={(url) => update("photoUrl", url)}
+          />
+          <UploadControl
+            accept="application/pdf"
+            kind="resume"
+            label="Upload resume PDF"
+            onUploaded={(url) => update("resumeUrl", url)}
+          />
+        </div>
+      </div>
+    </CardShell>
+  );
+}
+
+function AboutPanel({
+  content,
+  setContent,
+}: {
+  content: HomeContent;
+  setContent: (content: HomeContent) => void;
+}) {
+  const about = content.aboutMe;
+  const factsText = about.facts.map((fact) => `${fact.key}: ${fact.value}`).join("\n");
+
+  function update(key: keyof typeof about, value: unknown) {
+    setContent({ ...content, aboutMe: { ...about, [key]: value } });
+  }
+
+  return (
+    <CardShell title="About me">
+      <div className="grid gap-4 md:grid-cols-2">
+        <TextInput
+          label="Image URL"
+          value={about.imageUrl}
+          onChange={(value) => update("imageUrl", value)}
+        />
+        <TextInput label="Since" value={about.since} onChange={(value) => update("since", value)} />
+        <TextAreaInput
+          className="md:col-span-2"
+          label="Content paragraphs"
+          rows={8}
+          value={about.content}
+          onChange={(value) => update("content", value)}
+        />
+        <TextAreaInput
+          label="Facts, one per line as key: value"
+          value={factsText}
+          onChange={(value) =>
+            update(
+              "facts",
+              value
+                .split("\n")
+                .filter(Boolean)
+                .map((line) => {
+                  const [key, ...rest] = line.split(":");
+                  return { key: key.trim(), value: rest.join(":").trim() };
+                }),
+            )
+          }
+        />
+        <UploadControl
+          accept="image/jpeg,image/png,image/webp"
+          kind="profile-photo"
+          label="Upload about image"
+          previewUrl={about.imageUrl}
+          onUploaded={(url) => update("imageUrl", url)}
+        />
+      </div>
+    </CardShell>
+  );
+}
+
+function ContactPanel({
+  content,
+  setContent,
+}: {
+  content: HomeContent;
+  setContent: (content: HomeContent) => void;
+}) {
+  const contact = content.contactInfo;
+  return (
+    <CardShell title="Contact info">
+      <div className="grid gap-4 md:grid-cols-3">
+        <TextInput
+          label="Email"
+          value={contact.email}
+          onChange={(value) =>
+            setContent({ ...content, contactInfo: { ...contact, email: value } })
+          }
+        />
+        <TextInput
+          label="Phone"
+          value={contact.phone}
+          onChange={(value) =>
+            setContent({ ...content, contactInfo: { ...contact, phone: value } })
+          }
+        />
+        <TextInput
+          label="WhatsApp URL"
+          value={contact.whatsapp}
+          onChange={(value) =>
+            setContent({ ...content, contactInfo: { ...contact, whatsapp: value } })
+          }
+        />
+      </div>
+    </CardShell>
+  );
+}
+
+function CollectionPanel({
+  title,
+  rows,
+  setRows,
+  fields,
+}: {
+  title: string;
+  rows: Row[];
+  setRows: (rows: Row[]) => void;
+  fields: Array<[string, string]>;
+}) {
+  const [editing, setEditing] = useState<Row | null>(null);
+  const ordered = useMemo(
+    () => [...rows].sort((a, b) => Number(a.order ?? 0) - Number(b.order ?? 0)),
+    [rows],
+  );
+
+  function upsert(row: Row) {
+    const normalized = { ...row, order: Number(row.order ?? rows.length + 1) };
+    setRows(
+      row.id ? rows.map((item) => (item.id === row.id ? normalized : item)) : [...rows, normalized],
+    );
+    setEditing(null);
+    toast.success(row.id ? "Updated locally" : "Added locally");
+  }
+
+  return (
+    <CardShell title={title}>
+      <div className="mb-4 flex justify-end">
+        <Button onClick={() => setEditing({})}>
+          <Plus className="h-4 w-4" />
+          Add
+        </Button>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {fields.slice(0, 4).map(([, label]) => (
+              <TableHead key={label}>{label}</TableHead>
+            ))}
+            <TableHead className="w-32">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {ordered.map((row) => (
+            <TableRow key={String(row.id ?? row.name ?? row.platform)}>
+              {fields.slice(0, 4).map(([key]) => (
+                <TableCell key={key} className="max-w-xs truncate">
+                  {String(row[key] ?? "")}
+                </TableCell>
+              ))}
+              <TableCell>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setEditing(row)}>
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setRows(rows.filter((item) => item !== row))}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <RowDialog
+        fields={fields}
+        row={editing}
+        title={title}
+        onClose={() => setEditing(null)}
+        onSave={upsert}
+      />
+    </CardShell>
+  );
+}
+
+function ExperiencePanel({
+  content,
+  setContent,
+}: {
+  content: HomeContent;
+  setContent: (content: HomeContent) => void;
+}) {
+  return (
+    <CollectionPanel
+      title="Experience"
+      rows={content.experience.map((row) => ({ ...row, bullets: row.bullets.join("\n") }))}
+      setRows={(rows) =>
+        setContent({
+          ...content,
+          experience: rows.map((row) => ({
+            ...(row as HomeContent["experience"][number]),
+            bullets: String(row.bullets ?? "")
+              .split("\n")
+              .filter(Boolean),
+          })),
+        })
+      }
+      fields={[
+        ["range", "Range"],
+        ["company", "Company"],
+        ["role", "Role"],
+        ["location", "Location"],
+        ["bullets", "Bullets"],
+        ["stack", "Stack"],
+        ["order", "Order"],
+      ]}
+    />
+  );
+}
+
+function ProjectPanel({
+  content,
+  setContent,
+}: {
+  content: HomeContent;
+  setContent: (content: HomeContent) => void;
+}) {
+  const rows = content.projects.map((row) => ({
+    ...row,
+    techStack: row.techStack.join("\n"),
+  }));
+
+  return (
+    <CollectionPanel
+      title="Projects"
+      rows={rows}
+      setRows={(nextRows) =>
+        setContent({
+          ...content,
+          projects: nextRows.map((row) => ({
+            ...(row as HomeContent["projects"][number]),
+            techStack: String(row.techStack ?? "")
+              .split("\n")
+              .filter(Boolean),
+          })),
+        })
+      }
+      fields={[
+        ["name", "Name"],
+        ["slug", "Slug"],
+        ["year", "Year"],
+        ["tag", "Tag"],
+        ["imageUrl", "Image URL"],
+        ["summary", "Summary"],
+        ["techStack", "Tech stack"],
+        ["liveUrl", "Live URL"],
+        ["githubUrl", "GitHub URL"],
+        ["challenges", "Challenges"],
+        ["futurePlans", "Future plans"],
+        ["order", "Order"],
+      ]}
+    />
+  );
+}
+
+function RowDialog({
+  fields,
+  row,
+  title,
+  onClose,
+  onSave,
+}: {
+  fields: Array<[string, string]>;
+  row: Row | null;
+  title: string;
+  onClose: () => void;
+  onSave: (row: Row) => void;
+}) {
+  const [draft, setDraft] = useState<Row>({});
+
+  useMemo(() => {
+    setDraft(row ?? {});
+  }, [row]);
+
+  return (
+    <Dialog open={Boolean(row)} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{row?.id ? `Edit ${title}` : `Add ${title}`}</DialogTitle>
+          <DialogDescription>Changes are local until you click Save all.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 md:grid-cols-2">
+          {fields.map(([key, label]) =>
+            key.toLowerCase().includes("summary") ||
+            key.toLowerCase().includes("plans") ||
+            key.toLowerCase().includes("challenges") ||
+            key.toLowerCase().includes("bullets") ||
+            key.toLowerCase().includes("stack") ? (
+              <TextAreaInput
+                key={key}
+                className="md:col-span-2"
+                label={label}
+                value={String(draft[key] ?? "")}
+                onChange={(value) => setDraft({ ...draft, [key]: value })}
+              />
+            ) : (
+              <TextInput
+                key={key}
+                label={label}
+                value={String(draft[key] ?? "")}
+                onChange={(value) => setDraft({ ...draft, [key]: value })}
+              />
+            ),
+          )}
+          {"imageUrl" in draft && draft.id ? (
+            <UploadControl
+              accept="image/jpeg,image/png,image/webp"
+              kind="project-image"
+              label="Upload project image"
+              previewUrl={String(draft.imageUrl ?? "")}
+              projectId={String(draft.id)}
+              onUploaded={(url) => setDraft({ ...draft, imageUrl: url })}
+            />
+          ) : null}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={() => onSave(draft)}>Apply</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const securitySchema = z
+  .object({
+    email: z.string().email(),
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(8).optional().or(z.literal("")),
+    verificationCode: z.string().min(1),
+  })
+  .required();
+
+function SecurityPanel({ adminEmail }: { adminEmail: string }) {
+  const form = useForm<z.infer<typeof securitySchema>>({
+    resolver: zodFormResolver(securitySchema),
+    defaultValues: {
+      email: adminEmail,
+      currentPassword: "",
+      newPassword: "",
+      verificationCode: "",
+    },
+  });
+  const [loading, setLoading] = useState(false);
+
+  async function onSubmit(values: z.infer<typeof securitySchema>) {
+    setLoading(true);
+    const response = await fetch("/api/dashboard/credentials", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+    setLoading(false);
+
+    if (!response.ok) {
+      const data = (await response.json()) as { error?: string };
+      toast.error(data.error ?? "Credential update failed");
+      return;
+    }
+
+    toast.success("Credentials updated");
+    form.reset({ email: values.email, currentPassword: "", newPassword: "", verificationCode: "" });
+  }
+
+  return (
+    <CardShell title="Email & password">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-2">
+        <TextInput label="Admin email" registration={form.register("email")} />
+        <TextInput
+          label="Current password"
+          type="password"
+          registration={form.register("currentPassword")}
+        />
+        <TextInput
+          label="New password"
+          type="password"
+          registration={form.register("newPassword")}
+        />
+        <TextInput
+          label="Verification code"
+          type="password"
+          registration={form.register("verificationCode")}
+        />
+        <p className="text-sm text-muted-foreground md:col-span-2">
+          Verification requires your current password plus the private `ADMIN_CHANGE_CODE` from env.
+        </p>
+        <Button className="md:w-fit" disabled={loading} type="submit">
+          {loading ? "Updating..." : "Update credentials"}
+        </Button>
+      </form>
+    </CardShell>
+  );
+}
+
+function TextInput({
+  label,
+  value,
+  onChange,
+  registration,
+  type = "text",
+}: {
+  label: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  registration?: UseFormRegisterReturn;
+  type?: string;
+}) {
+  return (
+    <label className="block text-sm">
+      {label}
+      <Input
+        className="mt-2"
+        type={type}
+        value={registration ? undefined : value}
+        onChange={registration ? undefined : (event) => onChange?.(event.target.value)}
+        {...registration}
+      />
+    </label>
+  );
+}
+
+function TextAreaInput({
+  label,
+  value,
+  onChange,
+  className,
+  rows = 4,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  rows?: number;
+}) {
+  return (
+    <label className={`block text-sm ${className ?? ""}`}>
+      {label}
+      <Textarea
+        className="mt-2"
+        rows={rows}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function UploadControl({
+  accept,
+  kind,
+  label,
+  onUploaded,
+  previewUrl,
+  projectId,
+}: {
+  accept: string;
+  kind: UploadKind;
+  label: string;
+  onUploaded: (url: string) => void;
+  previewUrl?: string;
+  projectId?: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+
+  async function handleFile(file: File) {
+    setLocalPreview(file.type.startsWith("image/") ? URL.createObjectURL(file) : null);
+    setUploading(true);
+
+    try {
+      const blob = await uploadAsset({ file, kind, projectId });
+      onUploaded(blob.url);
+      toast.success("Uploaded to Vercel Blob");
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <label className="block text-sm">
+      {label}
+      <Input
+        accept={accept}
+        className="mt-2"
+        disabled={uploading}
+        type="file"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) void handleFile(file);
+        }}
+      />
+      {uploading ? (
+        <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-full w-2/3 animate-pulse rounded-full bg-primary" />
+        </div>
+      ) : null}
+      {localPreview || previewUrl ? (
+        <img
+          src={localPreview ?? previewUrl}
+          alt=""
+          className="mt-3 h-24 w-24 rounded-md border border-border object-cover"
+        />
+      ) : null}
+    </label>
+  );
+}
