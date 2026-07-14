@@ -46,10 +46,10 @@ export function Navbar() {
         >
           <a href="#top" className="group flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground font-display text-sm font-bold">
-              A
+              Z
             </span>
             <span className="font-display text-sm font-semibold tracking-tight">
-              ari<span className="text-primary">.</span>dev
+              zabir<span className="text-primary">.</span>dev
             </span>
           </a>
 

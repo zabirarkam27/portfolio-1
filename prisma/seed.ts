@@ -29,11 +29,11 @@ async function main() {
 
   await prisma.profile.create({
     data: {
-      name: "Ari Novak",
+      name: "Zabir Arkam",
       designation: "Full-Stack Engineer · 06 yrs",
       headline: "Building the quiet parts of the web.",
       tagline:
-        "I'm Ari Novak — a full-stack developer who ships considered interfaces, resilient APIs, and everything the pixel forgets in between.",
+        "I'm Zabir Arkam — a full-stack developer who ships considered interfaces, resilient APIs, and everything the pixel forgets in between.",
       availability: "Available · Q3 2026",
       location: "Lisbon → Remote",
       currentCompany: "Northwind Labs",
@@ -277,7 +277,7 @@ async function main() {
 
   await prisma.contactInfo.create({
     data: {
-      email: "hello@ari.dev",
+      email: "hello@zabir.dev",
       phone: "+351 910 000 000",
       whatsapp: "#",
     },

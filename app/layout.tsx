@@ -28,13 +28,15 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   ...baseMetadata({
-    title: "Ari Novak - Full-Stack Developer & Product Engineer",
+    title: "Zabir Arkam - Full-Stack Developer & Product Engineer",
     description:
-      "Portfolio of Ari Novak, a full-stack developer building considered interfaces, resilient APIs, and thoughtful digital products.",
+      "Portfolio of Zabir Arkam, a full-stack developer building considered interfaces, resilient APIs, and thoughtful digital products.",
     image: "/assets/portrait.png",
   }),
   icons: {
-    icon: "/favicon.ico",
+    icon: "/icon",
+    shortcut: "/icon",
+    apple: "/apple-icon",
   },
 };
 
