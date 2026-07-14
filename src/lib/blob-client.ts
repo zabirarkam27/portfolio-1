@@ -1,6 +1,6 @@
 import { upload } from "@vercel/blob/client";
 
-import type { UploadKind } from "@/lib/upload-assets";
+import { validateUploadFile, type UploadKind } from "@/lib/upload-validation";
 
 type UploadAssetOptions = {
   file: File;
@@ -10,6 +10,8 @@ type UploadAssetOptions = {
 };
 
 export async function uploadAsset({ file, kind, projectId, uploadSecret }: UploadAssetOptions) {
+  validateUploadFile(kind, file);
+
   return upload(file.name, file, {
     access: "public",
     handleUploadUrl: "/api/uploads/blob",

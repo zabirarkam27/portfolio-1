@@ -2,12 +2,16 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you&apos;re looking for doesn&apos;t exist or has been moved.
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 text-foreground grain">
+      <div className="pointer-events-none absolute -top-40 left-1/2 h-[480px] w-[760px] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]" />
+      <div className="relative max-w-md text-center">
+        <p className="font-mono-tight text-xs uppercase tracking-[0.25em] text-primary">
+          404 / Missing route
+        </p>
+        <h1 className="mt-4 font-display text-6xl font-semibold tracking-tight">Lost signal.</h1>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+          This portfolio page does not exist anymore, or the case study moved while nobody was
+          watching.
         </p>
         <div className="mt-6">
           <Link

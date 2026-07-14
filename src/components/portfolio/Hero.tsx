@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowDownRight, Github, Linkedin, Twitter, Facebook, MapPin } from "lucide-react";
+import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 import type { ProfileContent } from "@/lib/content-types";
 import type { SocialLink } from "@/generated/prisma/client";
@@ -131,11 +132,12 @@ export function Hero({
             <div className="relative">
               <div className="absolute -inset-6 rounded-full bg-gradient-to-br from-primary/30 via-transparent to-transparent blur-2xl" />
               <div className="relative aspect-square w-64 overflow-hidden rounded-full border border-primary/40 sm:w-80 lg:w-72 xl:w-80">
-                <img
+                <Image
                   src={profile.photoUrl}
                   alt={`Portrait of ${profile.name}`}
-                  width={1024}
-                  height={1280}
+                  fill
+                  priority
+                  sizes="(min-width: 1280px) 20rem, (min-width: 1024px) 18rem, (min-width: 640px) 20rem, 16rem"
                   className="h-full w-full object-cover"
                 />
               </div>

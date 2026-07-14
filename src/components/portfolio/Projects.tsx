@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import type { Project } from "@/generated/prisma/client";
 import { SectionHeader } from "./SectionHeader";
@@ -26,12 +27,11 @@ export function Projects({ projects }: { projects: Project[] }) {
             className="group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-card transition-all hover:-translate-y-1 hover:border-primary/40"
           >
             <div className="relative aspect-[4/3] overflow-hidden">
-              <img
+              <Image
                 src={p.imageUrl}
                 alt={p.name}
-                width={1200}
-                height={800}
-                loading="lazy"
+                fill
+                sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-x-3 top-3 flex items-center justify-between font-mono-tight text-[10px] uppercase tracking-widest">

@@ -1,11 +1,11 @@
 import "server-only";
 
+import { z } from "zod";
+
 import { prisma } from "@/lib/prisma";
+import { type UploadKind } from "@/lib/upload-validation";
 
-export const imageContentTypes = ["image/jpeg", "image/png", "image/webp"] as const;
-export const resumeContentTypes = ["application/pdf"] as const;
-
-export type UploadKind = "profile-photo" | "resume" | "project-image";
+export { allowedContentTypes, validateUploadFile, type UploadKind } from "@/lib/upload-validation";
 
 export type UploadPayload = {
   kind: UploadKind;
@@ -13,26 +13,34 @@ export type UploadPayload = {
   uploadSecret?: string;
 };
 
+const uploadPayloadSchema = z
+  .object({
+    kind: z.enum(["profile-photo", "resume", "project-image"]),
+    projectId: z.string().optional(),
+    uploadSecret: z.string().optional(),
+  })
+  .superRefine((payload, ctx) => {
+    if (payload.kind === "project-image" && !payload.projectId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Project image uploads require projectId",
+        path: ["projectId"],
+      });
+    }
+  });
+
 export function parseUploadPayload(value: string | null | undefined): UploadPayload {
   if (!value) {
     throw new Error("Missing upload payload");
   }
 
-  const payload = JSON.parse(value) as Partial<UploadPayload>;
+  const result = uploadPayloadSchema.safeParse(JSON.parse(value));
 
-  if (
-    payload.kind !== "profile-photo" &&
-    payload.kind !== "resume" &&
-    payload.kind !== "project-image"
-  ) {
-    throw new Error("Unsupported upload kind");
+  if (!result.success) {
+    throw new Error("Invalid upload payload");
   }
 
-  if (payload.kind === "project-image" && !payload.projectId) {
-    throw new Error("Project image uploads require projectId");
-  }
-
-  return payload as UploadPayload;
+  return result.data;
 }
 
 export function assertUploadAuthorized(payload: UploadPayload, request?: Request) {
@@ -48,10 +56,6 @@ export function assertUploadAuthorized(payload: UploadPayload, request?: Request
   if (providedSecret !== expectedSecret) {
     throw new Error("Unauthorized upload");
   }
-}
-
-export function allowedContentTypes(kind: UploadKind): string[] {
-  return kind === "resume" ? [...resumeContentTypes] : [...imageContentTypes];
 }
 
 export function uploadPath(kind: UploadKind, filename: string) {

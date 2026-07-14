@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireAdminForApi } from "@/lib/admin-auth";
 import { getHomeContent } from "@/lib/content";
 import { prisma } from "@/lib/prisma";
+import { revalidatePortfolioPaths } from "@/lib/revalidate";
 
 const optionalId = z.string().optional();
 const order = z.coerce.number().int().default(0);
@@ -125,49 +126,64 @@ export async function PUT(request: Request) {
 
   const data = result.data;
 
-  await prisma.$transaction(async (tx) => {
-    await tx.profile.update({
-      where: { id: data.profile.id },
-      data: {
-        name: data.profile.name,
-        designation: data.profile.designation,
-        headline: data.profile.headline,
-        tagline: data.profile.tagline,
-        availability: data.profile.availability,
-        location: data.profile.location,
-        currentCompany: data.profile.currentCompany,
-        photoUrl: data.profile.photoUrl,
-        resumeUrl: data.profile.resumeUrl,
-        footerTagline: data.profile.footerTagline,
-        stats: data.profile.stats,
-      },
-    });
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.profile.update({
+          where: { id: data.profile.id },
+          data: {
+            name: data.profile.name,
+            designation: data.profile.designation,
+            headline: data.profile.headline,
+            tagline: data.profile.tagline,
+            availability: data.profile.availability,
+            location: data.profile.location,
+            currentCompany: data.profile.currentCompany,
+            photoUrl: data.profile.photoUrl,
+            resumeUrl: data.profile.resumeUrl,
+            footerTagline: data.profile.footerTagline,
+            stats: data.profile.stats,
+          },
+        });
 
-    await tx.aboutMe.update({
-      where: { id: data.aboutMe.id },
-      data: {
-        content: data.aboutMe.content,
-        imageUrl: data.aboutMe.imageUrl,
-        since: data.aboutMe.since,
-        facts: data.aboutMe.facts,
-      },
-    });
+        await tx.aboutMe.update({
+          where: { id: data.aboutMe.id },
+          data: {
+            content: data.aboutMe.content,
+            imageUrl: data.aboutMe.imageUrl,
+            since: data.aboutMe.since,
+            facts: data.aboutMe.facts,
+          },
+        });
 
-    await tx.contactInfo.update({
-      where: { id: data.contactInfo.id },
-      data: {
-        email: data.contactInfo.email,
-        phone: data.contactInfo.phone,
-        whatsapp: data.contactInfo.whatsapp,
-      },
-    });
+        await tx.contactInfo.update({
+          where: { id: data.contactInfo.id },
+          data: {
+            email: data.contactInfo.email,
+            phone: data.contactInfo.phone,
+            whatsapp: data.contactInfo.whatsapp,
+          },
+        });
 
-    await replaceCollection(tx, "socialLink", data.socialLinks);
-    await replaceCollection(tx, "skill", data.skillRows);
-    await replaceCollection(tx, "education", data.education);
-    await replaceCollection(tx, "experience", data.experience);
-    await replaceCollection(tx, "project", data.projects);
-  });
+        await replaceCollection(tx, "socialLink", data.socialLinks);
+        await replaceCollection(tx, "skill", data.skillRows);
+        await replaceCollection(tx, "education", data.education);
+        await replaceCollection(tx, "experience", data.experience);
+        await replaceCollection(tx, "project", data.projects);
+      },
+      {
+        maxWait: 10_000,
+        timeout: 30_000,
+      },
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Dashboard save failed" },
+      { status: 500 },
+    );
+  }
+
+  revalidatePortfolioPaths();
 
   const content = await getHomeContent();
   return NextResponse.json({ ...content, admin: { email: admin.email } });

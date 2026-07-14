@@ -10,6 +10,7 @@ import {
   validateUpdate,
 } from "@/lib/dashboard-crud";
 import { requireAdminForApi } from "@/lib/admin-auth";
+import { revalidatePortfolioPaths } from "@/lib/revalidate";
 
 type RouteContext = {
   params: Promise<{ resource: string; id: string }>;
@@ -57,6 +58,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   try {
     const data = await updateResourceById(resource, id, result.data);
+    revalidatePortfolioPaths();
     return NextResponse.json({ data });
   } catch (error) {
     return handleMutationError(error);
@@ -78,6 +80,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   try {
     const data = await deleteResourceById(resource, id);
+    revalidatePortfolioPaths();
     return NextResponse.json({ data });
   } catch (error) {
     return handleMutationError(error);

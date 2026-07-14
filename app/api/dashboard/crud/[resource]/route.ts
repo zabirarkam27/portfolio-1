@@ -11,6 +11,7 @@ import {
   validateUpdate,
 } from "@/lib/dashboard-crud";
 import { requireAdminForApi } from "@/lib/admin-auth";
+import { revalidatePortfolioPaths } from "@/lib/revalidate";
 
 type RouteContext = {
   params: Promise<{ resource: string }>;
@@ -54,6 +55,7 @@ export async function POST(request: Request, context: RouteContext) {
 
   try {
     const data = await createResource(resource, result.data);
+    revalidatePortfolioPaths();
     return NextResponse.json({ data }, { status: 201 });
   } catch (error) {
     return handleMutationError(error);
@@ -81,6 +83,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   try {
     const data = await updateSingletonResource(resource, result.data);
+    revalidatePortfolioPaths();
     return NextResponse.json({ data });
   } catch (error) {
     return handleMutationError(error);

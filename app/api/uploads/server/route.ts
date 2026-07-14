@@ -2,13 +2,14 @@ import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 import {
-  allowedContentTypes,
   assertUploadAuthorized,
   parseUploadPayload,
   updateAssetUrl,
   uploadPath,
+  validateUploadFile,
 } from "@/lib/upload-assets";
 import { requireAdminForApi } from "@/lib/admin-auth";
+import { revalidatePortfolioPaths } from "@/lib/revalidate";
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
@@ -25,9 +26,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       throw new Error("Missing file");
     }
 
-    if (!allowedContentTypes(payload.kind).includes(file.type)) {
-      throw new Error(`Unsupported content type: ${file.type}`);
-    }
+    validateUploadFile(payload.kind, file);
 
     const blob = await put(uploadPath(payload.kind, file.name), file, {
       access: "public",
@@ -35,6 +34,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     await updateAssetUrl(payload, blob.url);
+    revalidatePortfolioPaths();
 
     return NextResponse.json({
       url: blob.url,

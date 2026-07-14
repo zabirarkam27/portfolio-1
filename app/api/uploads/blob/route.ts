@@ -8,6 +8,7 @@ import {
   updateAssetUrl,
 } from "@/lib/upload-assets";
 import { requireAdminForApi } from "@/lib/admin-auth";
+import { revalidatePortfolioPaths } from "@/lib/revalidate";
 
 export async function POST(request: Request): Promise<NextResponse> {
   const body = (await request.json()) as HandleUploadBody;
@@ -35,6 +36,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       onUploadCompleted: async ({ blob, tokenPayload }) => {
         const payload = parseUploadPayload(tokenPayload);
         await updateAssetUrl(payload, blob.url);
+        revalidatePortfolioPaths();
       },
     });
 

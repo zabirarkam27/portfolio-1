@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import Image from "next/image";
 import type { AboutContent } from "@/lib/content-types";
 import { SectionHeader } from "./SectionHeader";
 
@@ -27,14 +28,15 @@ export function About({ aboutMe }: { aboutMe: AboutContent }) {
         >
           <div className="relative">
             <div className="absolute -inset-4 rounded-3xl bg-primary/10 blur-2xl" />
-            <img
-              src={aboutMe.imageUrl}
-              alt="Workspace"
-              width={1024}
-              height={1280}
-              loading="lazy"
-              className="relative aspect-[4/5] w-full rounded-3xl border border-border object-cover"
-            />
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-border">
+              <Image
+                src={aboutMe.imageUrl}
+                alt="Workspace"
+                fill
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                className="object-cover"
+              />
+            </div>
             <div className="absolute -bottom-4 -right-4 rounded-2xl border border-border bg-background px-4 py-3 font-mono-tight text-xs">
               <span className="text-muted-foreground">since</span>{" "}
               <span className="text-foreground">{aboutMe.since}</span>

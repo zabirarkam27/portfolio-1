@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, ExternalLink, Github } from "lucide-react";
 
@@ -71,12 +72,13 @@ export function ProjectDetail({
           transition={{ duration: 0.7, delay: 0.15 }}
           className="mt-14 overflow-hidden rounded-3xl border border-border"
         >
-          <img
+          <Image
             src={project.imageUrl}
             alt={project.name}
             width={1200}
             height={800}
-            className="w-full"
+            sizes="(min-width: 1024px) 64rem, 100vw"
+            className="h-auto w-full"
           />
         </motion.div>
 

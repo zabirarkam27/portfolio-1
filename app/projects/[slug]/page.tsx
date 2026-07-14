@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getHomeContent, getProjectBySlug, getProjectSlugs } from "@/lib/content";
+import { baseMetadata } from "@/lib/site";
 import { ProjectDetail } from "./project-detail";
 
 type ProjectPageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   const projects = await getProjectSlugs();
@@ -27,8 +28,12 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   }
 
   return {
-    title: `${project.name} - Ari Novak`,
-    description: project.summary,
+    ...baseMetadata({
+      title: `${project.name} - Project case study`,
+      description: project.summary,
+      image: project.imageUrl,
+      path: `/projects/${project.slug}`,
+    }),
   };
 }
 

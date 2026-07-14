@@ -1,10 +1,29 @@
 "use client";
 
 import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   BriefcaseBusiness,
   Contact,
+  ExternalLink,
   FileText,
   GraduationCap,
+  GripVertical,
   ImageIcon,
   KeyRound,
   Layers3,
@@ -12,11 +31,13 @@ import {
   LogOut,
   Plus,
   Save,
+  Search,
   Trash2,
   UserRound,
 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -80,7 +101,23 @@ export function DashboardClient({
   const router = useRouter();
   const [active, setActive] = useState<SectionKey>("profile");
   const [content, setContent] = useState(initialContent);
+  const [savedContent, setSavedContent] = useState(initialContent);
   const [isPending, startTransition] = useTransition();
+  const isDirty = useMemo(
+    () => JSON.stringify(content) !== JSON.stringify(savedContent),
+    [content, savedContent],
+  );
+
+  useEffect(() => {
+    function warnBeforeUnload(event: BeforeUnloadEvent) {
+      if (!isDirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [isDirty]);
 
   async function saveContent(nextContent = content) {
     const response = await fetch("/api/dashboard/content", {
@@ -95,8 +132,10 @@ export function DashboardClient({
       return;
     }
 
-    const saved = (await response.json()) as HomeContent & { admin: { email: string } };
+    const saved = (await response.json()) as HomeContent & { admin?: { email: string } };
+    delete saved.admin;
     setContent(saved);
+    setSavedContent(saved);
     toast.success("Saved");
   }
 
@@ -142,13 +181,19 @@ export function DashboardClient({
                 Edit live portfolio content from NeonDB.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" asChild>
+                <a href="/" target="_blank" rel="noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                  Preview live site
+                </a>
+              </Button>
               <Button
                 onClick={() => startTransition(() => void saveContent())}
                 disabled={isPending}
               >
                 <Save className="h-4 w-4" />
-                {isPending ? "Saving..." : "Save all"}
+                {isPending ? "Saving..." : isDirty ? "Save all" : "Saved"}
               </Button>
               <Button variant="outline" onClick={logout}>
                 <LogOut className="h-4 w-4" />
@@ -171,6 +216,11 @@ export function DashboardClient({
         </header>
 
         <div className="mx-auto max-w-6xl p-4 sm:p-6">
+          <div className="mb-6 grid gap-3 sm:grid-cols-3">
+            <StatCard label="Projects" value={content.projects.length} />
+            <StatCard label="Skills" value={content.skillRows.length} />
+            <StatCard label="Experience" value={content.experience.length} />
+          </div>
           {active === "profile" && <ProfilePanel content={content} setContent={setContent} />}
           {active === "about" && <AboutPanel content={content} setContent={setContent} />}
           {active === "socials" && (
@@ -237,6 +287,15 @@ function CardShell({ title, children }: { title: string; children: React.ReactNo
       <h2 className="mb-4 font-display text-xl font-semibold">{title}</h2>
       {children}
     </section>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+      <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="mt-2 font-display text-2xl font-semibold">{value}</div>
+    </div>
   );
 }
 
@@ -446,10 +505,30 @@ function CollectionPanel({
   fields: Array<[string, string]>;
 }) {
   const [editing, setEditing] = useState<Row | null>(null);
+  const [query, setQuery] = useState("");
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
   const ordered = useMemo(
     () => [...rows].sort((a, b) => Number(a.order ?? 0) - Number(b.order ?? 0)),
     [rows],
   );
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+
+    if (!needle) return ordered;
+
+    return ordered.filter((row) =>
+      fields.some(([key]) =>
+        String(row[key] ?? "")
+          .toLowerCase()
+          .includes(needle),
+      ),
+    );
+  }, [fields, ordered, query]);
 
   function upsert(row: Row) {
     const normalized = { ...row, order: Number(row.order ?? rows.length + 1) };
@@ -460,9 +539,38 @@ function CollectionPanel({
     toast.success(row.id ? "Updated locally" : "Added locally");
   }
 
+  function rowKey(row: Row) {
+    return String(row.id ?? row.name ?? row.platform ?? row.slug ?? row.order);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = ordered.findIndex((row) => rowKey(row) === active.id);
+    const newIndex = ordered.findIndex((row) => rowKey(row) === over.id);
+    const reordered = arrayMove(ordered, oldIndex, newIndex).map((row, index) => ({
+      ...row,
+      order: index + 1,
+    }));
+
+    setRows(reordered);
+    toast.success("Order updated locally");
+  }
+
   return (
     <CardShell title={title}>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <label className="relative min-w-64 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder={`Search ${title.toLowerCase()}`}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
         <Button onClick={() => setEditing({})}>
           <Plus className="h-4 w-4" />
           Add
@@ -477,31 +585,33 @@ function CollectionPanel({
             <TableHead className="w-32">Actions</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
-          {ordered.map((row) => (
-            <TableRow key={String(row.id ?? row.name ?? row.platform)}>
-              {fields.slice(0, 4).map(([key]) => (
-                <TableCell key={key} className="max-w-xs truncate">
-                  {String(row[key] ?? "")}
-                </TableCell>
-              ))}
-              <TableCell>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setEditing(row)}>
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => setRows(rows.filter((item) => item !== row))}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={filtered.map(rowKey)} strategy={verticalListSortingStrategy}>
+            <TableBody>
+              {filtered.length ? (
+                filtered.map((row) => (
+                  <SortableRow
+                    key={rowKey(row)}
+                    id={rowKey(row)}
+                    row={row}
+                    fields={fields}
+                    onEdit={() => setEditing(row)}
+                    onDelete={() => setRows(rows.filter((item) => item !== row))}
+                  />
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={fields.slice(0, 4).length + 1}
+                    className="h-32 text-center text-sm text-muted-foreground"
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
+                    No {title.toLowerCase()} found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </SortableContext>
+        </DndContext>
       </Table>
       <RowDialog
         fields={fields}
@@ -511,6 +621,57 @@ function CollectionPanel({
         onSave={upsert}
       />
     </CardShell>
+  );
+}
+
+function SortableRow({
+  id,
+  row,
+  fields,
+  onEdit,
+  onDelete,
+}: {
+  id: string;
+  row: Row;
+  fields: Array<[string, string]>;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+
+  return (
+    <TableRow ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}>
+      {fields.slice(0, 4).map(([key], index) => (
+        <TableCell key={key} className="max-w-xs truncate">
+          {index === 0 ? (
+            <span className="inline-flex items-center gap-2">
+              <button
+                className="cursor-grab rounded-md p-1 text-muted-foreground hover:bg-muted"
+                type="button"
+                aria-label="Drag to reorder"
+                {...attributes}
+                {...listeners}
+              >
+                <GripVertical className="h-4 w-4" />
+              </button>
+              {String(row[key] ?? "")}
+            </span>
+          ) : (
+            String(row[key] ?? "")
+          )}
+        </TableCell>
+      ))}
+      <TableCell>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={onEdit}>
+            Edit
+          </Button>
+          <Button size="sm" variant="destructive" onClick={onDelete}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -840,11 +1001,17 @@ function UploadControl({
         </div>
       ) : null}
       {localPreview || previewUrl ? (
-        <img
-          src={localPreview ?? previewUrl}
-          alt=""
-          className="mt-3 h-24 w-24 rounded-md border border-border object-cover"
-        />
+        <div className="relative mt-3 h-24 w-24 overflow-hidden rounded-md border border-border">
+          {localPreview ? (
+            <div
+              aria-label="Upload preview"
+              className="h-full w-full bg-cover bg-center"
+              style={{ backgroundImage: `url(${localPreview})` }}
+            />
+          ) : previewUrl ? (
+            <Image src={previewUrl} alt="" fill sizes="6rem" className="object-cover" />
+          ) : null}
+        </div>
       ) : null}
     </label>
   );
