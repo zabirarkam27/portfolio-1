@@ -24,6 +24,25 @@ To activate it, create a free Sentry project and add these Vercel environment va
 
 The app only initializes Sentry when the DSN env vars are present, so local and preview builds work without a Sentry account.
 
+## Email Inbox And Replies
+
+The public contact form saves messages to Neon in `ContactMessage`. Dashboard admins can read messages in the Inbox section.
+
+For direct dashboard replies, configure:
+
+- `RESEND_API_KEY`
+- `FROM_EMAIL=hello@zabir.dev`
+
+Without `RESEND_API_KEY`, the dashboard still shows the message and provides an `Open mail app` fallback.
+
+For real incoming email to `hello@zabir.dev`, configure an email provider with MX records for the domain and forward inbound webhooks to:
+
+```text
+https://zabirarkam-portfolio.vercel.app/api/inbound/resend
+```
+
+If `INBOUND_EMAIL_SECRET` is set, the webhook must send it in the `x-inbound-email-secret` header.
+
 ## Analytics
 
 Vercel Web Analytics and Speed Insights are enabled for the Vercel project. The app includes:

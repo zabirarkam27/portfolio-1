@@ -1,9 +1,25 @@
+"use client";
+
 import { motion } from "framer-motion";
 import { Mail, Phone, MessageCircle, ArrowUpRight } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import type { ContactInfo } from "@/generated/prisma/client";
+import { whatsappUrl } from "@/lib/whatsapp";
 import { SectionHeader } from "./SectionHeader";
 
 export function Contact({ contactInfo }: { contactInfo: ContactInfo }) {
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
+  const whatsAppHref = whatsappUrl(
+    contactInfo.whatsapp || contactInfo.phone,
+    "Hi Zabir, I came from your portfolio and want to talk about a project.",
+  );
   const channels = [
     {
       icon: Mail,
@@ -21,9 +37,39 @@ export function Contact({ contactInfo }: { contactInfo: ContactInfo }) {
       icon: MessageCircle,
       label: "WhatsApp",
       value: "Message me →",
-      href: contactInfo.whatsapp,
+      href: whatsAppHref,
     },
   ];
+
+  async function submitMessage(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+
+    const response = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+
+    setSubmitting(false);
+
+    if (!response.ok) {
+      const data = (await response.json()) as {
+        error?: string;
+        details?: Array<{ path: string; message: string }>;
+      };
+      const firstIssue = data.details?.[0];
+      toast.error(
+        firstIssue
+          ? `${firstIssue.path || "Message"}: ${firstIssue.message}`
+          : (data.error ?? "Message failed"),
+      );
+      return;
+    }
+
+    toast.success("Message sent");
+    setForm({ name: "", email: "", subject: "", message: "" });
+  }
 
   return (
     <section id="contact" className="relative border-t border-border py-24 sm:py-32">
@@ -71,7 +117,7 @@ export function Contact({ contactInfo }: { contactInfo: ContactInfo }) {
 
           {/* Right: form */}
           <motion.form
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={submitMessage}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -79,10 +125,27 @@ export function Contact({ contactInfo }: { contactInfo: ContactInfo }) {
             className="rounded-3xl border border-border bg-card p-6 sm:p-8"
           >
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <Field label="Name" placeholder="Ada Lovelace" />
-              <Field label="Email" placeholder="ada@algorithm.co" type="email" />
+              <Field
+                label="Name"
+                placeholder="Ada Lovelace"
+                value={form.name}
+                onChange={(value) => setForm({ ...form, name: value })}
+              />
+              <Field
+                label="Email"
+                placeholder="ada@algorithm.co"
+                type="email"
+                value={form.email}
+                onChange={(value) => setForm({ ...form, email: value })}
+              />
             </div>
-            <Field className="mt-5" label="Subject" placeholder="A new product for…" />
+            <Field
+              className="mt-5"
+              label="Subject"
+              placeholder="A new product for..."
+              value={form.subject}
+              onChange={(value) => setForm({ ...form, subject: value })}
+            />
             <div className="mt-5">
               <label className="mb-2 block font-mono-tight text-[10px] uppercase tracking-widest text-muted-foreground">
                 Message
@@ -90,14 +153,17 @@ export function Contact({ contactInfo }: { contactInfo: ContactInfo }) {
               <textarea
                 rows={5}
                 placeholder="Tell me a little about what you're building."
+                value={form.message}
+                onChange={(event) => setForm({ ...form, message: event.target.value })}
                 className="w-full resize-none rounded-2xl border border-border bg-background/40 p-4 text-sm outline-none transition-colors focus:border-primary"
               />
             </div>
             <button
               type="submit"
+              disabled={submitting}
               className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-4 text-sm font-semibold text-primary-foreground transition-all hover:gap-3 hover:shadow-[0_10px_40px_-10px_var(--color-primary)] sm:w-auto"
             >
-              Send message
+              {submitting ? "Sending..." : "Send message"}
               <ArrowUpRight className="h-4 w-4" />
             </button>
           </motion.form>
@@ -112,11 +178,15 @@ function Field({
   placeholder,
   type = "text",
   className = "",
+  value,
+  onChange,
 }: {
   label: string;
   placeholder: string;
   type?: string;
   className?: string;
+  value: string;
+  onChange: (value: string) => void;
 }) {
   return (
     <div className={className}>
@@ -126,6 +196,8 @@ function Field({
       <input
         type={type}
         placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-full border border-border bg-background/40 px-4 py-3 text-sm outline-none transition-colors focus:border-primary"
       />
     </div>

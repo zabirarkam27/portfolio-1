@@ -20,6 +20,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   BriefcaseBusiness,
   Contact,
+  Inbox,
   ExternalLink,
   FileText,
   GraduationCap,
@@ -37,7 +38,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -63,6 +64,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { uploadAsset } from "@/lib/blob-client";
 import type { HomeContent } from "@/lib/content-types";
+import type { ContactMessage } from "@/generated/prisma/client";
 import type { UploadKind } from "@/lib/upload-assets";
 import { zodFormResolver } from "@/lib/zod-form-resolver";
 
@@ -74,6 +76,7 @@ type SectionKey =
   | "education"
   | "experience"
   | "projects"
+  | "inbox"
   | "contact"
   | "security";
 
@@ -87,6 +90,7 @@ const sections: Array<{ key: SectionKey; label: string; icon: React.ElementType 
   { key: "education", label: "Education", icon: GraduationCap },
   { key: "experience", label: "Experience", icon: BriefcaseBusiness },
   { key: "projects", label: "Projects", icon: ImageIcon },
+  { key: "inbox", label: "Inbox", icon: Inbox },
   { key: "contact", label: "Contact", icon: Contact },
   { key: "security", label: "Security", icon: KeyRound },
 ];
@@ -281,11 +285,193 @@ export function DashboardClient({
           )}
           {active === "experience" && <ExperiencePanel content={content} setContent={setContent} />}
           {active === "projects" && <ProjectPanel content={content} setContent={setContent} />}
+          {active === "inbox" && <InboxPanel />}
           {active === "contact" && <ContactPanel content={content} setContent={setContent} />}
           {active === "security" && <SecurityPanel adminEmail={adminEmail} />}
         </div>
       </main>
     </div>
+  );
+}
+
+function InboxPanel() {
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [selected, setSelected] = useState<ContactMessage | null>(null);
+  const [replyBody, setReplyBody] = useState("");
+  const [replySubject, setReplySubject] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+
+  const loadMessages = useCallback(async () => {
+    setLoading(true);
+    const response = await fetch("/api/dashboard/messages");
+    setLoading(false);
+
+    if (!response.ok) {
+      toast.error("Inbox could not be loaded");
+      return;
+    }
+
+    const data = (await response.json()) as { messages: ContactMessage[] };
+    setMessages(data.messages);
+
+    if (!selected && data.messages[0]) {
+      setSelected(data.messages[0]);
+      setReplySubject(`Re: ${data.messages[0].subject}`);
+    }
+  }, [selected]);
+
+  useEffect(() => {
+    void loadMessages();
+  }, [loadMessages]);
+
+  async function markStatus(message: ContactMessage, status: ContactMessage["status"]) {
+    const response = await fetch(`/api/dashboard/messages/${message.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      toast.error("Status update failed");
+      return;
+    }
+
+    const data = (await response.json()) as { message: ContactMessage };
+    setMessages((items) =>
+      items.map((item) => (item.id === data.message.id ? data.message : item)),
+    );
+    setSelected(data.message);
+  }
+
+  async function sendReply() {
+    if (!selected) return;
+
+    setSending(true);
+    const response = await fetch(`/api/dashboard/messages/${selected.id}/reply`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subject: replySubject || `Re: ${selected.subject}`,
+        body: replyBody,
+      }),
+    });
+    setSending(false);
+
+    if (!response.ok) {
+      const data = (await response.json()) as { error?: string };
+      toast.error(data.error ?? "Reply failed");
+      return;
+    }
+
+    toast.success("Reply sent");
+    setReplyBody("");
+    await loadMessages();
+  }
+
+  return (
+    <CardShell title="Inbox">
+      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+        <div className="rounded-lg border border-border">
+          {loading ? (
+            <div className="p-4 text-sm text-muted-foreground">Loading inbox...</div>
+          ) : messages.length ? (
+            messages.map((message) => (
+              <button
+                key={message.id}
+                className={`block w-full border-b border-border p-4 text-left transition-colors last:border-b-0 ${
+                  selected?.id === message.id ? "bg-muted" : "hover:bg-muted/60"
+                }`}
+                onClick={() => {
+                  setSelected(message);
+                  setReplySubject(`Re: ${message.subject}`);
+                }}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="truncate text-sm font-semibold">{message.name}</div>
+                  <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
+                    {message.status}
+                  </span>
+                </div>
+                <div className="mt-1 truncate text-xs text-muted-foreground">{message.subject}</div>
+                <div className="mt-2 truncate text-xs text-muted-foreground">{message.email}</div>
+              </button>
+            ))
+          ) : (
+            <div className="p-4 text-sm text-muted-foreground">No messages yet.</div>
+          )}
+        </div>
+
+        {selected ? (
+          <div className="space-y-4 rounded-lg border border-border p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="font-display text-xl font-semibold">{selected.subject}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {selected.name} · {selected.email}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Source: {selected.source}
+                  {selected.inboundTo ? ` · To: ${selected.inboundTo}` : ""}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void markStatus(selected, "read")}
+                >
+                  Mark read
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void markStatus(selected, "archived")}
+                >
+                  Archive
+                </Button>
+              </div>
+            </div>
+
+            <div className="whitespace-pre-wrap rounded-lg bg-muted p-4 text-sm leading-relaxed">
+              {selected.message}
+            </div>
+
+            <div className="grid gap-3">
+              <TextInput
+                label="Reply subject"
+                value={replySubject}
+                onChange={(value) => setReplySubject(value)}
+              />
+              <TextAreaInput
+                label="Reply"
+                rows={8}
+                value={replyBody}
+                onChange={(value) => setReplyBody(value)}
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button disabled={sending || !replyBody.trim()} onClick={sendReply}>
+                  {sending ? "Sending..." : "Send reply"}
+                </Button>
+                <Button variant="outline" asChild>
+                  <a
+                    href={`mailto:${selected.email}?subject=${encodeURIComponent(
+                      replySubject || `Re: ${selected.subject}`,
+                    )}&body=${encodeURIComponent(replyBody)}`}
+                  >
+                    Open mail app
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            Select a message to read and reply.
+          </div>
+        )}
+      </div>
+    </CardShell>
   );
 }
 
