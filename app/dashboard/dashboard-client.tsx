@@ -127,8 +127,16 @@ export function DashboardClient({
     });
 
     if (!response.ok) {
-      const data = (await response.json()) as { error?: string };
-      toast.error(data.error ?? "Save failed");
+      const data = (await response.json()) as {
+        error?: string;
+        details?: Array<{ path: string; message: string }>;
+      };
+      const firstIssue = data.details?.[0];
+      toast.error(
+        firstIssue
+          ? `${firstIssue.path || "Content"}: ${firstIssue.message}`
+          : (data.error ?? "Save failed"),
+      );
       return;
     }
 
@@ -370,6 +378,7 @@ function ProfilePanel({
               "stats",
               value
                 .split("\n")
+                .map((line) => line.trim())
                 .filter(Boolean)
                 .map((line) => {
                   const [key, ...rest] = line.split(":");
@@ -436,6 +445,7 @@ function AboutPanel({
               "facts",
               value
                 .split("\n")
+                .map((line) => line.trim())
                 .filter(Boolean)
                 .map((line) => {
                   const [key, ...rest] = line.split(":");
@@ -531,7 +541,23 @@ function CollectionPanel({
   }, [fields, ordered, query]);
 
   function upsert(row: Row) {
-    const normalized = { ...row, order: Number(row.order ?? rows.length + 1) };
+    const normalized = Object.fromEntries(
+      Object.entries({ ...row, order: Number(row.order ?? rows.length + 1) }).map(
+        ([key, value]) => {
+          if (typeof value !== "string") {
+            return [key, value];
+          }
+
+          const trimmed = value.trim();
+
+          if (["githubUrl", "liveUrl", "icon", "tag"].includes(key) && !trimmed) {
+            return [key, null];
+          }
+
+          return [key, trimmed];
+        },
+      ),
+    ) as Row;
     setRows(
       row.id ? rows.map((item) => (item.id === row.id ? normalized : item)) : [...rows, normalized],
     );
@@ -693,6 +719,7 @@ function ExperiencePanel({
             ...(row as HomeContent["experience"][number]),
             bullets: String(row.bullets ?? "")
               .split("\n")
+              .map((item) => item.trim())
               .filter(Boolean),
           })),
         })
@@ -733,6 +760,7 @@ function ProjectPanel({
             ...(row as HomeContent["projects"][number]),
             techStack: String(row.techStack ?? "")
               .split("\n")
+              .map((item) => item.trim())
               .filter(Boolean),
           })),
         })

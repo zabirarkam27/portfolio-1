@@ -8,6 +8,10 @@ import { revalidatePortfolioPaths } from "@/lib/revalidate";
 
 const optionalId = z.string().optional();
 const order = z.coerce.number().int().default(0);
+const optionalText = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.string().nullable().optional(),
+);
 
 const profileSchema = z.object({
   id: z.string(),
@@ -47,8 +51,8 @@ const contentSchema = z.object({
       name: z.string().min(1),
       category: z.string().min(1),
       proficiency: z.coerce.number().int().min(0).max(100).nullable().optional(),
-      icon: z.string().nullable().optional(),
-      tag: z.string().nullable().optional(),
+      icon: optionalText,
+      tag: optionalText,
       order,
     }),
   ),
@@ -59,7 +63,7 @@ const contentSchema = z.object({
       school: z.string().min(1),
       degree: z.string().min(1),
       note: z.string().min(1),
-      icon: z.string().nullable().optional(),
+      icon: optionalText,
       order,
     }),
   ),
@@ -85,8 +89,8 @@ const contentSchema = z.object({
       imageUrl: z.string().min(1),
       summary: z.string().min(1),
       techStack: z.array(z.string().min(1)),
-      liveUrl: z.string().nullable().optional(),
-      githubUrl: z.string().nullable().optional(),
+      liveUrl: optionalText,
+      githubUrl: optionalText,
       challenges: z.string().min(1),
       futurePlans: z.string().min(1),
       order,
@@ -121,7 +125,16 @@ export async function PUT(request: Request) {
   const result = contentSchema.safeParse(await request.json());
 
   if (!result.success) {
-    return NextResponse.json({ error: "Invalid dashboard content" }, { status: 400 });
+    return NextResponse.json(
+      {
+        error: "Invalid dashboard content",
+        details: result.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      },
+      { status: 400 },
+    );
   }
 
   const data = result.data;
