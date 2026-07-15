@@ -47,7 +47,7 @@ export function Navbar() {
         >
           <a href="#top" className="group flex items-center gap-2">
             <img
-              src={theme === "dark" ? "/assets/logo-light.png" : "/assets/logo-dark.png"}
+              src={theme === "dark" ? "/assets/logo-dark.png" : "/assets/logo-light.png"}
               alt="Zabir Arkam"
               className="h-8 w-auto"
             />
