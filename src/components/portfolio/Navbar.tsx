@@ -46,12 +46,11 @@ export function Navbar() {
           )}
         >
           <a href="#top" className="group flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground font-display text-sm font-bold">
-              Z
-            </span>
-            <span className="font-display text-sm font-semibold tracking-tight">
-              zabir<span className="text-primary">.</span>dev
-            </span>
+            <img
+              src={theme === "dark" ? "/assets/logo-light.png" : "/assets/logo-dark.png"}
+              alt="Zabir Arkam"
+              className="h-8 w-auto"
+            />
           </a>
 
           <nav className="hidden items-center gap-1 md:flex">
