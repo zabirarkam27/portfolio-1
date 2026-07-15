@@ -53,17 +53,29 @@ function groupSkills(skills: HomeContent["skillRows"]): SkillGroup[] {
 }
 
 export async function getHomeContent(): Promise<HomeContent> {
-  const [profile, aboutMe, socialLinks, skillRows, education, experience, projects, contactInfo] =
-    await Promise.all([
-      prisma.profile.findFirstOrThrow(),
-      prisma.aboutMe.findFirstOrThrow(),
-      prisma.socialLink.findMany({ orderBy: { order: "asc" } }),
-      prisma.skill.findMany({ orderBy: { order: "asc" } }),
-      prisma.education.findMany({ orderBy: { order: "asc" } }),
-      prisma.experience.findMany({ orderBy: { order: "asc" } }),
-      prisma.project.findMany({ orderBy: { order: "asc" } }),
-      prisma.contactInfo.findFirstOrThrow(),
-    ]);
+  const [
+    profile,
+    aboutMe,
+    socialLinks,
+    skillRows,
+    education,
+    experience,
+    projects,
+    achievements,
+    heroStats,
+    contactInfo,
+  ] = await Promise.all([
+    prisma.profile.findFirstOrThrow(),
+    prisma.aboutMe.findFirstOrThrow(),
+    prisma.socialLink.findMany({ orderBy: { order: "asc" } }),
+    prisma.skill.findMany({ orderBy: { order: "asc" } }),
+    prisma.education.findMany({ orderBy: { order: "asc" } }),
+    prisma.experience.findMany({ orderBy: { order: "asc" } }),
+    prisma.project.findMany({ orderBy: { order: "asc" } }),
+    prisma.achievement.findMany({ orderBy: { order: "asc" } }),
+    prisma.heroStat.findMany({ orderBy: { order: "asc" } }),
+    prisma.contactInfo.findFirstOrThrow(),
+  ]);
 
   return {
     profile: {
@@ -82,6 +94,8 @@ export async function getHomeContent(): Promise<HomeContent> {
     education,
     experience,
     projects,
+    achievements,
+    heroStats,
     contactInfo,
   };
 }

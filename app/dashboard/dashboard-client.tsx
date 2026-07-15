@@ -19,6 +19,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   BriefcaseBusiness,
+  Award,
+  BarChart3,
   Contact,
   Inbox,
   ExternalLink,
@@ -73,6 +75,8 @@ type SectionKey =
   | "about"
   | "socials"
   | "skills"
+  | "achievements"
+  | "heroStats"
   | "education"
   | "experience"
   | "projects"
@@ -87,6 +91,8 @@ const sections: Array<{ key: SectionKey; label: string; icon: React.ElementType 
   { key: "about", label: "About", icon: FileText },
   { key: "socials", label: "Social links", icon: LinkIcon },
   { key: "skills", label: "Skills", icon: Layers3 },
+  { key: "achievements", label: "Achievements", icon: Award },
+  { key: "heroStats", label: "Hero stats", icon: BarChart3 },
   { key: "education", label: "Education", icon: GraduationCap },
   { key: "experience", label: "Experience", icon: BriefcaseBusiness },
   { key: "projects", label: "Projects", icon: ImageIcon },
@@ -110,6 +116,13 @@ export function DashboardClient({
   const isDirty = useMemo(
     () => JSON.stringify(content) !== JSON.stringify(savedContent),
     [content, savedContent],
+  );
+  const missingSections = useMemo(
+    () => ({
+      contact: !content.contactInfo.email.trim() || !content.contactInfo.phone.trim(),
+      education: content.education.length < 1,
+    }),
+    [content.contactInfo.email, content.contactInfo.phone, content.education.length],
   );
 
   useEffect(() => {
@@ -148,7 +161,12 @@ export function DashboardClient({
     delete saved.admin;
     setContent(saved);
     setSavedContent(saved);
-    toast.success("Saved");
+    const missingLabels = Object.entries(missingSections)
+      .filter(([, missing]) => missing)
+      .map(([section]) => section);
+    toast.success(
+      missingLabels.length ? `Saved. Missing launch info: ${missingLabels.join(", ")}` : "Saved",
+    );
   }
 
   async function logout() {
@@ -176,7 +194,12 @@ export function DashboardClient({
               }`}
             >
               <section.icon className="h-4 w-4" />
-              {section.label}
+              <span className="flex-1">{section.label}</span>
+              {missingSections[section.key as keyof typeof missingSections] ? (
+                <span className="rounded-full bg-destructive px-2 py-0.5 text-[10px] font-semibold uppercase text-destructive-foreground">
+                  Missing
+                </span>
+              ) : null}
             </button>
           ))}
         </nav>
@@ -222,6 +245,7 @@ export function DashboardClient({
                 onClick={() => setActive(section.key)}
               >
                 {section.label}
+                {missingSections[section.key as keyof typeof missingSections] ? " !" : ""}
               </Button>
             ))}
           </div>
@@ -231,7 +255,7 @@ export function DashboardClient({
           <div className="mb-6 grid gap-3 sm:grid-cols-3">
             <StatCard label="Projects" value={content.projects.length} />
             <StatCard label="Skills" value={content.skillRows.length} />
-            <StatCard label="Experience" value={content.experience.length} />
+            <StatCard label="Achievements" value={content.achievements.length} />
           </div>
           {active === "profile" && <ProfilePanel content={content} setContent={setContent} />}
           {active === "about" && <AboutPanel content={content} setContent={setContent} />}
@@ -266,12 +290,34 @@ export function DashboardClient({
               ]}
             />
           )}
+          {active === "achievements" && (
+            <AchievementPanel content={content} setContent={setContent} />
+          )}
+          {active === "heroStats" && (
+            <CollectionPanel
+              title="Hero stats"
+              rows={content.heroStats}
+              setRows={(rows) =>
+                setContent({ ...content, heroStats: rows as HomeContent["heroStats"] })
+              }
+              fields={[
+                ["value", "Value"],
+                ["label", "Label"],
+                ["order", "Order"],
+              ]}
+            />
+          )}
           {active === "education" && (
             <CollectionPanel
               title="Education"
               rows={content.education}
               setRows={(rows) =>
                 setContent({ ...content, education: rows as HomeContent["education"] })
+              }
+              warning={
+                content.education.length < 1
+                  ? "Missing launch info: add at least one education entry before production."
+                  : undefined
               }
               fields={[
                 ["year", "Year"],
@@ -660,8 +706,14 @@ function ContactPanel({
   setContent: (content: HomeContent) => void;
 }) {
   const contact = content.contactInfo;
+  const missing = !contact.email.trim() || !contact.phone.trim();
   return (
     <CardShell title="Contact info">
+      {missing ? (
+        <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          Missing launch info: email and phone should be filled before production.
+        </div>
+      ) : null}
       <div className="grid gap-4 md:grid-cols-3">
         <TextInput
           label="Email"
@@ -694,11 +746,15 @@ function CollectionPanel({
   rows,
   setRows,
   fields,
+  warning,
+  uploadKind,
 }: {
   title: string;
   rows: Row[];
   setRows: (rows: Row[]) => void;
   fields: Array<[string, string]>;
+  warning?: string;
+  uploadKind?: UploadKind;
 }) {
   const [editing, setEditing] = useState<Row | null>(null);
   const [query, setQuery] = useState("");
@@ -736,7 +792,7 @@ function CollectionPanel({
 
           const trimmed = value.trim();
 
-          if (["githubUrl", "liveUrl", "icon", "tag"].includes(key) && !trimmed) {
+          if (["githubUrl", "liveUrl", "verifyUrl", "icon", "tag"].includes(key) && !trimmed) {
             return [key, null];
           }
 
@@ -773,6 +829,11 @@ function CollectionPanel({
 
   return (
     <CardShell title={title}>
+      {warning ? (
+        <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          {warning}
+        </div>
+      ) : null}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <label className="relative min-w-64 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -829,6 +890,7 @@ function CollectionPanel({
         fields={fields}
         row={editing}
         title={title}
+        uploadKind={uploadKind}
         onClose={() => setEditing(null)}
         onSave={upsert}
       />
@@ -965,6 +1027,34 @@ function ProjectPanel({
         ["futurePlans", "Future plans"],
         ["order", "Order"],
       ]}
+      uploadKind="project-image"
+    />
+  );
+}
+
+function AchievementPanel({
+  content,
+  setContent,
+}: {
+  content: HomeContent;
+  setContent: (content: HomeContent) => void;
+}) {
+  return (
+    <CollectionPanel
+      title="Achievements"
+      rows={content.achievements}
+      setRows={(rows) =>
+        setContent({ ...content, achievements: rows as HomeContent["achievements"] })
+      }
+      fields={[
+        ["title", "Title"],
+        ["issuer", "Issuer"],
+        ["year", "Year"],
+        ["imageUrl", "Image URL"],
+        ["verifyUrl", "Verify URL"],
+        ["order", "Order"],
+      ]}
+      uploadKind="achievement-image"
     />
   );
 }
@@ -973,12 +1063,14 @@ function RowDialog({
   fields,
   row,
   title,
+  uploadKind,
   onClose,
   onSave,
 }: {
   fields: Array<[string, string]>;
   row: Row | null;
   title: string;
+  uploadKind?: UploadKind;
   onClose: () => void;
   onSave: (row: Row) => void;
 }) {
@@ -1018,13 +1110,18 @@ function RowDialog({
               />
             ),
           )}
-          {"imageUrl" in draft && draft.id ? (
+          {"imageUrl" in draft && draft.id && uploadKind ? (
             <UploadControl
               accept="image/jpeg,image/png,image/webp"
-              kind="project-image"
-              label="Upload project image"
+              kind={uploadKind}
+              label={
+                uploadKind === "achievement-image"
+                  ? "Upload achievement image"
+                  : "Upload project image"
+              }
               previewUrl={String(draft.imageUrl ?? "")}
-              projectId={String(draft.id)}
+              projectId={uploadKind === "project-image" ? String(draft.id) : undefined}
+              achievementId={uploadKind === "achievement-image" ? String(draft.id) : undefined}
               onUploaded={(url) => setDraft({ ...draft, imageUrl: url })}
             />
           ) : null}
@@ -1170,6 +1267,7 @@ function UploadControl({
   onUploaded,
   previewUrl,
   projectId,
+  achievementId,
 }: {
   accept: string;
   kind: UploadKind;
@@ -1177,6 +1275,7 @@ function UploadControl({
   onUploaded: (url: string) => void;
   previewUrl?: string;
   projectId?: string;
+  achievementId?: string;
 }) {
   const [uploading, setUploading] = useState(false);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
@@ -1186,7 +1285,7 @@ function UploadControl({
     setUploading(true);
 
     try {
-      const blob = await uploadAsset({ file, kind, projectId });
+      const blob = await uploadAsset({ file, kind, projectId, achievementId });
       onUploaded(blob.url);
       toast.success("Uploaded to Vercel Blob");
     } catch (error) {

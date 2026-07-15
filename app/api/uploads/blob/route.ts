@@ -30,6 +30,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           tokenPayload: JSON.stringify({
             kind: payload.kind,
             projectId: payload.projectId,
+            achievementId: payload.achievementId,
           }),
         };
       },

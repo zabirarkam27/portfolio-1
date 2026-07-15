@@ -1,7 +1,7 @@
 export const imageContentTypes = ["image/jpeg", "image/png", "image/webp"] as const;
 export const resumeContentTypes = ["application/pdf"] as const;
 
-export type UploadKind = "profile-photo" | "resume" | "project-image";
+export type UploadKind = "profile-photo" | "resume" | "project-image" | "achievement-image";
 
 export function allowedContentTypes(kind: UploadKind): string[] {
   return kind === "resume" ? [...resumeContentTypes] : [...imageContentTypes];

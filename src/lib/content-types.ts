@@ -1,8 +1,10 @@
 import type {
   AboutMe,
+  Achievement,
   ContactInfo,
   Education,
   Experience,
+  HeroStat,
   Profile,
   Project,
   Skill,
@@ -47,6 +49,8 @@ export type HomeContent = {
   education: Education[];
   experience: Experience[];
   projects: Project[];
+  achievements: Achievement[];
+  heroStats: HeroStat[];
   contactInfo: ContactInfo;
 };
 

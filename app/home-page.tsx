@@ -1,6 +1,7 @@
 "use client";
 
 import { About } from "@/components/portfolio/About";
+import { Achievements } from "@/components/portfolio/Achievements";
 import { Contact } from "@/components/portfolio/Contact";
 import { Education } from "@/components/portfolio/Education";
 import { Experience } from "@/components/portfolio/Experience";
@@ -16,9 +17,15 @@ export function HomePage({ content }: { content: HomeContent }) {
     <div className="min-h-screen bg-background text-foreground grain">
       <Navbar />
       <main>
-        <Hero profile={content.profile} socialLinks={content.socialLinks} />
+        <Hero
+          profile={content.profile}
+          socialLinks={content.socialLinks}
+          heroStats={content.heroStats}
+          skills={content.skillRows}
+        />
         <About aboutMe={content.aboutMe} />
         <Skills groups={content.skillGroups} tags={content.skillTags} />
+        <Achievements achievements={content.achievements} />
         <Education items={content.education} />
         <Experience roles={content.experience} />
         <Projects projects={content.projects} />

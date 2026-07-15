@@ -54,7 +54,7 @@ export function Footer({
           <span>
             © {new Date().getFullYear()} {profile.name}. All rights reserved.
           </span>
-          <span>Handcrafted in Lisbon · v2.6</span>
+          <span>Handcrafted in Dhaka · v2.6</span>
         </div>
       </div>
     </footer>

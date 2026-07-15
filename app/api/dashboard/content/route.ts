@@ -12,44 +12,46 @@ const optionalText = z.preprocess(
   (value) => (value === "" ? null : value),
   z.string().nullable().optional(),
 );
+const text = z.string();
+const requiredText = z.string().min(1);
 
 const profileSchema = z.object({
   id: z.string(),
-  name: z.string().min(1),
-  designation: z.string().min(1),
-  headline: z.string().min(1),
-  tagline: z.string().min(1),
-  availability: z.string().min(1),
-  location: z.string().min(1),
-  currentCompany: z.string().min(1),
-  photoUrl: z.string().min(1),
-  resumeUrl: z.string().min(1),
-  footerTagline: z.string().min(1),
-  stats: z.array(z.object({ key: z.string().min(1), value: z.string().min(1) })),
+  name: requiredText,
+  designation: requiredText,
+  headline: requiredText,
+  tagline: requiredText,
+  availability: requiredText,
+  location: requiredText,
+  currentCompany: text,
+  photoUrl: requiredText,
+  resumeUrl: requiredText,
+  footerTagline: requiredText,
+  stats: z.array(z.object({ key: requiredText, value: requiredText })),
 });
 
 const contentSchema = z.object({
   profile: profileSchema,
   aboutMe: z.object({
     id: z.string(),
-    content: z.string().min(1),
-    imageUrl: z.string().min(1),
-    since: z.string().min(1),
-    facts: z.array(z.object({ key: z.string().min(1), value: z.string().min(1) })),
+    content: requiredText,
+    imageUrl: requiredText,
+    since: requiredText,
+    facts: z.array(z.object({ key: requiredText, value: requiredText })),
   }),
   socialLinks: z.array(
     z.object({
       id: optionalId,
-      platform: z.string().min(1),
-      url: z.string().min(1),
+      platform: requiredText,
+      url: requiredText,
       order,
     }),
   ),
   skillRows: z.array(
     z.object({
       id: optionalId,
-      name: z.string().min(1),
-      category: z.string().min(1),
+      name: requiredText,
+      category: requiredText,
       proficiency: z.coerce.number().int().min(0).max(100).nullable().optional(),
       icon: optionalText,
       tag: optionalText,
@@ -59,10 +61,10 @@ const contentSchema = z.object({
   education: z.array(
     z.object({
       id: optionalId,
-      year: z.string().min(1),
-      school: z.string().min(1),
-      degree: z.string().min(1),
-      note: z.string().min(1),
+      year: requiredText,
+      school: requiredText,
+      degree: requiredText,
+      note: requiredText,
       icon: optionalText,
       order,
     }),
@@ -70,37 +72,56 @@ const contentSchema = z.object({
   experience: z.array(
     z.object({
       id: optionalId,
-      range: z.string().min(1),
-      company: z.string().min(1),
-      role: z.string().min(1),
-      location: z.string().min(1),
-      bullets: z.array(z.string().min(1)),
-      stack: z.string().min(1),
+      range: requiredText,
+      company: requiredText,
+      role: requiredText,
+      location: requiredText,
+      bullets: z.array(requiredText),
+      stack: requiredText,
       order,
     }),
   ),
   projects: z.array(
     z.object({
       id: optionalId,
-      slug: z.string().min(1),
-      name: z.string().min(1),
-      year: z.string().min(1),
-      tag: z.string().min(1),
-      imageUrl: z.string().min(1),
-      summary: z.string().min(1),
-      techStack: z.array(z.string().min(1)),
+      slug: requiredText,
+      name: requiredText,
+      year: requiredText,
+      tag: requiredText,
+      imageUrl: requiredText,
+      summary: requiredText,
+      techStack: z.array(requiredText),
       liveUrl: optionalText,
       githubUrl: optionalText,
-      challenges: z.string().min(1),
-      futurePlans: z.string().min(1),
+      challenges: requiredText,
+      futurePlans: requiredText,
+      order,
+    }),
+  ),
+  achievements: z.array(
+    z.object({
+      id: optionalId,
+      title: requiredText,
+      issuer: requiredText,
+      year: requiredText,
+      imageUrl: requiredText,
+      verifyUrl: optionalText,
+      order,
+    }),
+  ),
+  heroStats: z.array(
+    z.object({
+      id: optionalId,
+      label: requiredText,
+      value: requiredText,
       order,
     }),
   ),
   contactInfo: z.object({
     id: z.string(),
-    email: z.string().min(1),
-    phone: z.string().min(1),
-    whatsapp: z.string().min(1),
+    email: text,
+    phone: text,
+    whatsapp: text,
   }),
 });
 
@@ -183,6 +204,8 @@ export async function PUT(request: Request) {
         await replaceCollection(tx, "education", data.education);
         await replaceCollection(tx, "experience", data.experience);
         await replaceCollection(tx, "project", data.projects);
+        await replaceCollection(tx, "achievement", data.achievements);
+        await replaceCollection(tx, "heroStat", data.heroStats);
       },
       {
         maxWait: 10_000,
@@ -204,7 +227,8 @@ export async function PUT(request: Request) {
 
 async function replaceCollection(
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
-  model: "socialLink" | "skill" | "education" | "experience" | "project",
+  model:
+    "socialLink" | "skill" | "education" | "experience" | "project" | "achievement" | "heroStat",
   rows: Array<Record<string, unknown>>,
 ) {
   const delegate = tx[model] as {

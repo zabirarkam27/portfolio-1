@@ -16,10 +16,13 @@ export function Contact({ contactInfo }: { contactInfo: ContactInfo }) {
     subject: "",
     message: "",
   });
-  const whatsAppHref = whatsappUrl(
-    contactInfo.whatsapp || contactInfo.phone,
-    "Hi Zabir, I came from your portfolio and want to talk about a project.",
-  );
+  const whatsAppHref =
+    contactInfo.whatsapp || contactInfo.phone
+      ? whatsappUrl(
+          contactInfo.whatsapp || contactInfo.phone,
+          "Hi Zabir, I came from your portfolio and want to talk about a project.",
+        )
+      : "";
   const channels = [
     {
       icon: Mail,
@@ -39,7 +42,7 @@ export function Contact({ contactInfo }: { contactInfo: ContactInfo }) {
       value: "Message me →",
       href: whatsAppHref,
     },
-  ];
+  ].filter((channel) => channel.value && channel.href);
 
   async function submitMessage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -76,7 +79,7 @@ export function Contact({ contactInfo }: { contactInfo: ContactInfo }) {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-primary/10 to-transparent" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <SectionHeader
-          index="06 / Contact"
+          index="07 / Contact"
           eyebrow="Let's talk"
           title={<>Have a project in mind, or just a good idea?</>}
         >

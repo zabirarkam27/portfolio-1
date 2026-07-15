@@ -4,6 +4,7 @@ import { z } from "zod";
 
 const order = z.coerce.number().int().default(0);
 const nonEmpty = z.string().min(1);
+const text = z.string();
 const optionalUrl = z.string().nullable().optional();
 
 const profileSchema = z.object({
@@ -13,7 +14,7 @@ const profileSchema = z.object({
   tagline: nonEmpty,
   availability: nonEmpty,
   location: nonEmpty,
-  currentCompany: nonEmpty,
+  currentCompany: text,
   photoUrl: nonEmpty,
   resumeUrl: nonEmpty,
   footerTagline: nonEmpty,
@@ -28,9 +29,9 @@ const aboutSchema = z.object({
 });
 
 const contactSchema = z.object({
-  email: nonEmpty,
-  phone: nonEmpty,
-  whatsapp: nonEmpty,
+  email: text,
+  phone: text,
+  whatsapp: text,
 });
 
 const socialLinkSchema = z.object({
@@ -82,6 +83,21 @@ const projectSchema = z.object({
   order,
 });
 
+const achievementSchema = z.object({
+  title: nonEmpty,
+  issuer: nonEmpty,
+  year: nonEmpty,
+  imageUrl: nonEmpty,
+  verifyUrl: optionalUrl,
+  order,
+});
+
+const heroStatSchema = z.object({
+  label: nonEmpty,
+  value: nonEmpty,
+  order,
+});
+
 export const resourceNames = [
   "profile",
   "about",
@@ -91,6 +107,8 @@ export const resourceNames = [
   "education",
   "experience",
   "projects",
+  "achievements",
+  "hero-stats",
 ] as const;
 
 export type DashboardResource = (typeof resourceNames)[number];
@@ -129,6 +147,10 @@ export async function listResource(resource: DashboardResource) {
       return prisma.experience.findMany({ orderBy: { order: "asc" } });
     case "projects":
       return prisma.project.findMany({ orderBy: { order: "asc" } });
+    case "achievements":
+      return prisma.achievement.findMany({ orderBy: { order: "asc" } });
+    case "hero-stats":
+      return prisma.heroStat.findMany({ orderBy: { order: "asc" } });
   }
 }
 
@@ -144,6 +166,10 @@ export async function getResourceById(resource: DashboardResource, id: string) {
       return prisma.experience.findUniqueOrThrow({ where: { id } });
     case "projects":
       return prisma.project.findUniqueOrThrow({ where: { id } });
+    case "achievements":
+      return prisma.achievement.findUniqueOrThrow({ where: { id } });
+    case "hero-stats":
+      return prisma.heroStat.findUniqueOrThrow({ where: { id } });
     default:
       throw new Error("Use collection endpoints for singleton resources.");
   }
@@ -161,6 +187,10 @@ export async function createResource(resource: DashboardResource, data: Record<s
       return prisma.experience.create({ data: data as Prisma.ExperienceCreateInput });
     case "projects":
       return prisma.project.create({ data: data as Prisma.ProjectCreateInput });
+    case "achievements":
+      return prisma.achievement.create({ data: data as Prisma.AchievementCreateInput });
+    case "hero-stats":
+      return prisma.heroStat.create({ data: data as Prisma.HeroStatCreateInput });
     default:
       throw new Error("Singleton resources cannot be created from the dashboard API.");
   }
@@ -219,6 +249,13 @@ export async function updateResourceById(
       });
     case "projects":
       return prisma.project.update({ where: { id }, data: data as Prisma.ProjectUpdateInput });
+    case "achievements":
+      return prisma.achievement.update({
+        where: { id },
+        data: data as Prisma.AchievementUpdateInput,
+      });
+    case "hero-stats":
+      return prisma.heroStat.update({ where: { id }, data: data as Prisma.HeroStatUpdateInput });
     default:
       throw new Error("Use collection endpoints to update singleton resources.");
   }
@@ -236,6 +273,10 @@ export async function deleteResourceById(resource: DashboardResource, id: string
       return prisma.experience.delete({ where: { id } });
     case "projects":
       return prisma.project.delete({ where: { id } });
+    case "achievements":
+      return prisma.achievement.delete({ where: { id } });
+    case "hero-stats":
+      return prisma.heroStat.delete({ where: { id } });
     default:
       throw new Error("Singleton resources cannot be deleted from the dashboard API.");
   }
@@ -259,5 +300,9 @@ function getSchema(resource: DashboardResource) {
       return experienceSchema;
     case "projects":
       return projectSchema;
+    case "achievements":
+      return achievementSchema;
+    case "hero-stats":
+      return heroStatSchema;
   }
 }

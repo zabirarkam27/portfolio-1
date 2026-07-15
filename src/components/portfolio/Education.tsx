@@ -10,10 +10,14 @@ const icons: Record<string, LucideIcon> = {
 };
 
 export function Education({ items }: { items: EducationRecord[] }) {
+  if (!items.length) {
+    return null;
+  }
+
   return (
     <section id="education" className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32">
       <SectionHeader
-        index="03 / Education"
+        index="04 / Education"
         eyebrow="School of thought"
         title={<>Where the fundamentals came from.</>}
       />

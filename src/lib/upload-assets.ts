@@ -10,13 +10,15 @@ export { allowedContentTypes, validateUploadFile, type UploadKind } from "@/lib/
 export type UploadPayload = {
   kind: UploadKind;
   projectId?: string;
+  achievementId?: string;
   uploadSecret?: string;
 };
 
 const uploadPayloadSchema = z
   .object({
-    kind: z.enum(["profile-photo", "resume", "project-image"]),
+    kind: z.enum(["profile-photo", "resume", "project-image", "achievement-image"]),
     projectId: z.string().optional(),
+    achievementId: z.string().optional(),
     uploadSecret: z.string().optional(),
   })
   .superRefine((payload, ctx) => {
@@ -25,6 +27,14 @@ const uploadPayloadSchema = z
         code: z.ZodIssueCode.custom,
         message: "Project image uploads require projectId",
         path: ["projectId"],
+      });
+    }
+
+    if (payload.kind === "achievement-image" && !payload.achievementId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Achievement image uploads require achievementId",
+        path: ["achievementId"],
       });
     }
   });
@@ -69,6 +79,10 @@ export function uploadPath(kind: UploadKind, filename: string) {
     return `resume/${safeName}`;
   }
 
+  if (kind === "achievement-image") {
+    return `achievements/${safeName}`;
+  }
+
   return `projects/${safeName}`;
 }
 
@@ -82,6 +96,13 @@ export async function updateAssetUrl(payload: UploadPayload, url: string) {
   if (payload.kind === "resume") {
     return prisma.profile.updateMany({
       data: { resumeUrl: url },
+    });
+  }
+
+  if (payload.kind === "achievement-image") {
+    return prisma.achievement.update({
+      where: { id: payload.achievementId },
+      data: { imageUrl: url },
     });
   }
 

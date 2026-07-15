@@ -23,10 +23,17 @@ export async function sendReplyEmail({
 
   const resend = new Resend(apiKey);
 
-  return resend.emails.send({
+  const response = await resend.emails.send({
     from: configuredFromEmail(),
     to,
     subject,
     text,
+    replyTo: configuredFromEmail(),
   });
+
+  if (response.error) {
+    throw new Error(response.error.message);
+  }
+
+  return response.data;
 }

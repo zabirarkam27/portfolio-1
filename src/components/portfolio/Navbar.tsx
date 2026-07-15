@@ -8,6 +8,7 @@ const links = [
   { id: "work", label: "Work" },
   { id: "about", label: "About" },
   { id: "skills", label: "Skills" },
+  { id: "achievements", label: "Achievements" },
   { id: "experience", label: "Experience" },
   { id: "education", label: "Education" },
   { id: "contact", label: "Contact" },

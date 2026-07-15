@@ -1,9 +1,36 @@
 import { motion } from "framer-motion";
 import { ArrowDownRight, Github, Linkedin, Twitter, Facebook, MapPin } from "lucide-react";
 import Image from "next/image";
+import {
+  SiCloudflare,
+  SiCss,
+  SiDocker,
+  SiFigma,
+  SiFirebase,
+  SiFramer,
+  SiGit,
+  SiGithub,
+  SiGraphql,
+  SiHtml5,
+  SiJavascript,
+  SiMongodb,
+  SiNextdotjs,
+  SiNodedotjs,
+  SiPostgresql,
+  SiPrisma,
+  SiReact,
+  SiRedis,
+  SiRust,
+  SiTailwindcss,
+  SiTypescript,
+  SiVercel,
+  SiVitest,
+  SiZod,
+} from "react-icons/si";
 import type { LucideIcon } from "lucide-react";
+import type { IconType } from "react-icons";
 import type { ProfileContent } from "@/lib/content-types";
-import type { SocialLink } from "@/generated/prisma/client";
+import type { HeroStat, Skill, SocialLink } from "@/generated/prisma/client";
 
 const socialIcons: Record<string, LucideIcon> = {
   Facebook,
@@ -12,16 +39,64 @@ const socialIcons: Record<string, LucideIcon> = {
   Twitter,
 };
 
+const techIcons: Record<string, { icon: IconType; color: string }> = {
+  cloudflare: { icon: SiCloudflare, color: "#f38020" },
+  css: { icon: SiCss, color: "#663399" },
+  docker: { icon: SiDocker, color: "#2496ed" },
+  figma: { icon: SiFigma, color: "#f24e1e" },
+  firebase: { icon: SiFirebase, color: "#ffca28" },
+  framer: { icon: SiFramer, color: "#0055ff" },
+  git: { icon: SiGit, color: "#f05032" },
+  github: { icon: SiGithub, color: "#f5f5f5" },
+  graphql: { icon: SiGraphql, color: "#e10098" },
+  html: { icon: SiHtml5, color: "#e34f26" },
+  javascript: { icon: SiJavascript, color: "#f7df1e" },
+  mongodb: { icon: SiMongodb, color: "#47a248" },
+  next: { icon: SiNextdotjs, color: "#f5f5f5" },
+  node: { icon: SiNodedotjs, color: "#5fa04e" },
+  postgres: { icon: SiPostgresql, color: "#4169e1" },
+  postgresql: { icon: SiPostgresql, color: "#4169e1" },
+  prisma: { icon: SiPrisma, color: "#2d3748" },
+  react: { icon: SiReact, color: "#61dafb" },
+  redis: { icon: SiRedis, color: "#ff4438" },
+  rust: { icon: SiRust, color: "#ce412b" },
+  tailwind: { icon: SiTailwindcss, color: "#06b6d4" },
+  typescript: { icon: SiTypescript, color: "#3178c6" },
+  vercel: { icon: SiVercel, color: "#f5f5f5" },
+  vitest: { icon: SiVitest, color: "#6e9f18" },
+  zod: { icon: SiZod, color: "#3068b7" },
+};
+
 export function Hero({
   profile,
   socialLinks,
+  heroStats,
+  skills,
 }: {
   profile: ProfileContent;
   socialLinks: SocialLink[];
+  heroStats: HeroStat[];
+  skills: Skill[];
 }) {
   const [headlineLead, headlineAfterQuiet = ""] = profile.headline.split("quiet");
   const [quietLineRest = "", ...headlineTailParts] = headlineAfterQuiet.trim().split(" ");
   const headlineTail = headlineTailParts.join(" ");
+  const currentCompany = profile.currentCompany.trim();
+  const visibleHeroStats = heroStats.length
+    ? heroStats
+    : profile.stats.map((stat, index) => ({
+        id: stat.key,
+        label: stat.value,
+        value: stat.key,
+        order: index,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+  const featuredSkills = skills
+    .filter((skill) => skill.category !== "Tag")
+    .filter((skill) => getTechIcon(skill))
+    .sort((a, b) => Number(a.order ?? 0) - Number(b.order ?? 0))
+    .slice(0, 12);
 
   return (
     <section id="top" className="relative overflow-hidden pt-28 pb-16 sm:pt-36 sm:pb-24">
@@ -141,9 +216,11 @@ export function Hero({
                   className="h-full w-full object-cover"
                 />
               </div>
-              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-border bg-background/80 px-4 py-1.5 font-mono-tight text-[10px] uppercase tracking-widest backdrop-blur">
-                ★ Currently @ {profile.currentCompany}
-              </div>
+              {currentCompany && currentCompany !== "-" ? (
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-border bg-background/80 px-4 py-1.5 font-mono-tight text-[10px] uppercase tracking-widest backdrop-blur">
+                  ★ Currently @ {currentCompany}
+                </div>
+              ) : null}
             </div>
           </motion.div>
 
@@ -154,8 +231,8 @@ export function Hero({
             transition={{ delay: 0.5, duration: 0.7 }}
             className="order-3 flex flex-col gap-6 lg:items-end lg:text-right"
           >
-            {profile.stats.map((stat) => (
-              <Stat key={stat.key} k={stat.key} v={stat.value} />
+            {visibleHeroStats.map((stat) => (
+              <Stat key={stat.id} k={stat.value} v={stat.label} />
             ))}
           </motion.div>
         </div>
@@ -188,6 +265,29 @@ export function Hero({
           ))}
         </div>
       </div>
+
+      {featuredSkills.length ? (
+        <div className="mx-auto mt-8 grid max-w-7xl grid-cols-3 gap-2 px-4 sm:grid-cols-4 sm:px-6 md:grid-cols-6 lg:grid-cols-12">
+          {featuredSkills.map((skill) => {
+            const tech = getTechIcon(skill);
+            if (!tech) return null;
+            const Icon = tech.icon;
+
+            return (
+              <div
+                key={skill.id}
+                className="group flex items-center gap-2 rounded-full border border-border bg-card/50 px-3 py-2"
+                title={skill.name}
+              >
+                <Icon className="h-4 w-4 shrink-0" style={{ color: tech.color }} />
+                <span className="truncate font-mono-tight text-[10px] uppercase tracking-widest text-muted-foreground group-hover:text-foreground">
+                  {skill.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -199,4 +299,10 @@ function Stat({ k, v }: { k: string; v: string }) {
       <div className="mt-1 text-sm text-muted-foreground">{v}</div>
     </div>
   );
+}
+
+function getTechIcon(skill: Skill) {
+  const source = `${skill.icon ?? ""} ${skill.name}`.toLowerCase();
+  const match = Object.entries(techIcons).find(([key]) => source.includes(key));
+  return match?.[1] ?? null;
 }

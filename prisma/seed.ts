@@ -25,6 +25,8 @@ async function main() {
   await prisma.education.deleteMany();
   await prisma.experience.deleteMany();
   await prisma.project.deleteMany();
+  await prisma.achievement.deleteMany();
+  await prisma.heroStat.deleteMany();
   await prisma.contactInfo.deleteMany();
 
   await prisma.profile.create({
@@ -35,16 +37,12 @@ async function main() {
       tagline:
         "I'm Zabir Arkam — a full-stack developer who ships considered interfaces, resilient APIs, and everything the pixel forgets in between.",
       availability: "Available · Q3 2026",
-      location: "Lisbon → Remote",
-      currentCompany: "Northwind Labs",
+      location: "Dhaka, Bangladesh",
+      currentCompany: "",
       photoUrl: "/assets/portrait.png",
       resumeUrl: "#",
       footerTagline: "Design + engineering, quietly.",
-      stats: [
-        { key: "06+", value: "Years shipping production systems" },
-        { key: "42", value: "Products launched end-to-end" },
-        { key: "11", value: "Open-source repos & contributions" },
-      ],
+      stats: [],
     },
   });
 
@@ -55,12 +53,12 @@ async function main() {
       content: [
         "I write software the way a carpenter finishes a joint you'll never see — not because anyone will notice, but because I would.",
         "I started with a hand-me-down ThinkPad and a physics degree that quietly turned into a career in code. Today I move between typed backends, design systems, and infrastructure — and I'm happiest at the seam between them, where the interesting trade-offs live.",
-        "Off the keyboard: film photography, brutalist architecture, and the ongoing search for a decent flat-white north of the river.",
+        "Based in Dhaka, Bangladesh, I care about fast interfaces, durable APIs, and practical systems that stay easy to change.",
       ].join("\n\n"),
       facts: [
         { key: "Focus", value: "Product engineering" },
         { key: "Stack", value: "TS · Node · Postgres" },
-        { key: "Timezone", value: "GMT +1" },
+        { key: "Timezone", value: "GMT +6" },
       ],
     },
   });
@@ -147,139 +145,11 @@ async function main() {
     })),
   });
 
-  await prisma.education.createMany({
-    data: [
-      {
-        year: "2017 — 2021",
-        school: "University of Porto",
-        degree: "B.Sc. Computer Science, minor in Physics",
-        note: "Thesis on distributed systems & CRDTs. Graduated with distinction (17.8/20).",
-        icon: "GraduationCap",
-        order: 1,
-      },
-      {
-        year: "2021",
-        school: "École 42 · Lisbon",
-        degree: "Advanced Systems Programming (C / Unix)",
-        note: "Piscine + 18-month project track.",
-        icon: "Award",
-        order: 2,
-      },
-      {
-        year: "2022 — ongoing",
-        school: "Self-directed",
-        degree: "Rust, distributed systems, type theory",
-        note: "Reading group + weekend implementations.",
-        icon: "Award",
-        order: 3,
-      },
-    ],
-  });
-
-  await prisma.experience.createMany({
-    data: [
-      {
-        range: "2024 — Now",
-        company: "Northwind Labs",
-        role: "Senior Full-Stack Engineer",
-        location: "Remote · EU",
-        bullets: [
-          "Lead engineer on a payments-adjacent product processing 2M+ tx/mo.",
-          "Migrated legacy monolith to a modular Turbo/Bun setup — CI 4× faster.",
-          "Owned end-to-end delivery of a new dashboard suite (Figma → prod).",
-        ],
-        stack: "TypeScript · Bun · Postgres · Cloudflare · Tailwind",
-        order: 1,
-      },
-      {
-        range: "2022 — 2024",
-        company: "Studio Halcyon",
-        role: "Product Engineer",
-        location: "Lisbon",
-        bullets: [
-          "Shipped 12 client products across fintech, cultural & DTC brands.",
-          "Built the studio's internal component & motion system (used across 40+ projects).",
-          "Mentored two junior engineers into confident mid-levels.",
-        ],
-        stack: "Next.js · Prisma · Framer Motion · Vercel",
-        order: 2,
-      },
-      {
-        range: "2020 — 2022",
-        company: "Kernel & Co.",
-        role: "Full-Stack Developer",
-        location: "Porto",
-        bullets: [
-          "Second engineering hire at a Series A startup (0 → 40k users).",
-          "Owned auth, billing, and the internal admin platform end-to-end.",
-        ],
-        stack: "Node · React · Postgres · AWS",
-        order: 3,
-      },
-    ],
-  });
-
-  await prisma.project.createMany({
-    data: [
-      {
-        slug: "orbit",
-        name: "Orbit Analytics",
-        year: "2025",
-        tag: "SaaS · Data",
-        imageUrl: "/assets/project-1.jpg",
-        summary:
-          "A calm analytics surface for teams drowning in dashboards. Realtime, keyboard-first, extensible.",
-        techStack: ["Next.js", "tRPC", "ClickHouse", "Tailwind", "Motion"],
-        liveUrl: "#",
-        githubUrl: "#",
-        challenges:
-          "Streaming millions of events per hour without UI jank.\nA design language flexible enough for dashboards, tables, and long-form.\nOnboarding a legacy team without breaking their muscle memory.",
-        futurePlans:
-          "Native command palette + saved views.\nLocal-first sync so the app opens instantly, offline.\nDeeper primitives for annotation and shared context.",
-        order: 1,
-      },
-      {
-        slug: "atelier",
-        name: "Atelier Commerce",
-        year: "2024",
-        tag: "E-commerce · CMS",
-        imageUrl: "/assets/project-2.jpg",
-        summary:
-          "Headless storefront platform for independent fashion labels. Editorial-first, checkout in three taps.",
-        techStack: ["Remix", "Shopify", "Postgres", "Stripe"],
-        liveUrl: "#",
-        githubUrl: "#",
-        challenges:
-          "Streaming millions of events per hour without UI jank.\nA design language flexible enough for dashboards, tables, and long-form.\nOnboarding a legacy team without breaking their muscle memory.",
-        futurePlans:
-          "Native command palette + saved views.\nLocal-first sync so the app opens instantly, offline.\nDeeper primitives for annotation and shared context.",
-        order: 2,
-      },
-      {
-        slug: "sonder",
-        name: "Sonder AI",
-        year: "2024",
-        tag: "AI · Mobile",
-        imageUrl: "/assets/project-3.jpg",
-        summary:
-          "An on-device journaling companion. Streaming inference, gentle motion, no dark patterns.",
-        techStack: ["Expo", "Rust", "SQLite", "OpenAI"],
-        liveUrl: "#",
-        githubUrl: "#",
-        challenges:
-          "Streaming millions of events per hour without UI jank.\nA design language flexible enough for dashboards, tables, and long-form.\nOnboarding a legacy team without breaking their muscle memory.",
-        futurePlans:
-          "Native command palette + saved views.\nLocal-first sync so the app opens instantly, offline.\nDeeper primitives for annotation and shared context.",
-        order: 3,
-      },
-    ],
-  });
-
   await prisma.contactInfo.create({
     data: {
-      email: "hello@zabir.dev",
-      phone: "+351 910 000 000",
-      whatsapp: "#",
+      email: "",
+      phone: "",
+      whatsapp: "",
     },
   });
 

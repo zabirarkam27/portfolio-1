@@ -6,10 +6,14 @@ import type { Project } from "@/generated/prisma/client";
 import { SectionHeader } from "./SectionHeader";
 
 export function Projects({ projects }: { projects: Project[] }) {
+  if (!projects.length) {
+    return null;
+  }
+
   return (
     <section id="work" className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32">
       <SectionHeader
-        index="05 / Work"
+        index="06 / Work"
         eyebrow="Selected projects"
         title={<>Things I built, still stand behind.</>}
       >

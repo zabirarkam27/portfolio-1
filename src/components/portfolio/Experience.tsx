@@ -6,6 +6,10 @@ import { SectionHeader } from "./SectionHeader";
 
 export function Experience({ roles }: { roles: ExperienceRecord[] }) {
   const [open, setOpen] = useState<number | null>(0);
+  if (!roles.length) {
+    return null;
+  }
+
   return (
     <section
       id="experience"
@@ -13,7 +17,7 @@ export function Experience({ roles }: { roles: ExperienceRecord[] }) {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <SectionHeader
-          index="04 / Experience"
+          index="05 / Experience"
           eyebrow="Track record"
           title={<>Roles, receipts, and the things I actually shipped.</>}
         />
