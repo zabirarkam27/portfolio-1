@@ -105,11 +105,11 @@ export function ProjectDetail({
           </div>
         </div>
 
-        <Block title="The brief">
+        {/* <Block title="The brief">
           The team came in with a messy internal reporting stack, six overlapping tools, and no
           single source of truth. My job was to design and build a calm, opinionated analytics
           surface - one that respected keyboards, respected attention, and got out of the way.
-        </Block>
+        </Block> */}
 
         <div className="mt-14 grid gap-6 md:grid-cols-2">
           <Callout title="Challenges" tint>

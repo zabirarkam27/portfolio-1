@@ -15,7 +15,7 @@ export function Education({ items }: { items: EducationRecord[] }) {
   return (
     <section id="education" className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
       <SectionHeader
-        index="04 / Education"
+        index="05 / Education"
         eyebrow="Academic Journey"
         title={<>Building a strong engineering foundation.</>}
       />

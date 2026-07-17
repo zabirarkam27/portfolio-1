@@ -76,10 +76,10 @@ export function Contact({ contactInfo }: { contactInfo: ContactInfo }) {
 
   return (
     <section id="contact" className="relative border-t border-border py-24 sm:py-32">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-primary/10 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-linear-to-b from-primary/10 to-transparent" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <SectionHeader
-          index="07 / Contact"
+          index="Contact"
           eyebrow="Let's talk"
           title={<>Have a project in mind, or just a good idea?</>}
         >

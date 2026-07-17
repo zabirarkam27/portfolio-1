@@ -25,10 +25,10 @@ export function HomePage({ content }: { content: HomeContent }) {
         />
         <About aboutMe={content.aboutMe} />
         <Skills groups={content.skillGroups} tags={content.skillTags} />
+        <Projects projects={content.projects} />
         <Achievements achievements={content.achievements} />
         <Education items={content.education} />
         <Experience roles={content.experience} />
-        <Projects projects={content.projects} />
         <Contact contactInfo={content.contactInfo} />
       </main>
       <Footer profile={content.profile} socialLinks={content.socialLinks} />
