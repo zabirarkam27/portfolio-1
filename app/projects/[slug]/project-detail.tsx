@@ -178,7 +178,7 @@ function Callout({
     <div
       className={
         "rounded-3xl border p-6 " +
-        (tint ? "border-primary/30 bg-primary/[0.04]" : "border-border bg-card")
+        (tint ? "border-primary/30 bg-primary/4" : "border-border bg-card")
       }
     >
       <div className="flex items-center gap-2">
