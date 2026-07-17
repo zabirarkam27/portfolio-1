@@ -28,7 +28,7 @@ export function About({ aboutMe }: { aboutMe: AboutContent }) {
         >
           <div className="relative">
             <div className="absolute -inset-4 rounded-3xl bg-primary/10 blur-2xl" />
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-border">
+            <div className="relative aspect-4/5 w-full overflow-hidden rounded-3xl border border-border">
               <Image
                 src={aboutMe.imageUrl}
                 alt="Workspace"
