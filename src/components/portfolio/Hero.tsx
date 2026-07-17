@@ -104,8 +104,8 @@ export function Hero({
       className="relative overflow-hidden pt-24 pb-12 sm:pt-32 sm:pb-20 lg:pt-32 lg:pb-20"
     >
       {/* ambient glow */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-primary/20 blur-[120px]" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:56px_56px]" />
+      <div className="pointer-events-none absolute -top-40 left-1/2 h-520px w-900px -translate-x-1/2 rounded-full bg-primary/20 blur-[120px]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.04] bg-[linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)]" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         {/* meta bar */}
@@ -136,7 +136,7 @@ export function Hero({
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="max-w-[760px] font-display text-[clamp(2.65rem,7vw,6.15rem)] font-semibold leading-[0.95] tracking-tight text-balance min-[900px]:text-[clamp(3.75rem,5.8vw,5.5rem)] xl:text-[clamp(4.2rem,6.2vw,6.15rem)]"
+              className="max-w-760px font-display text-[clamp(2.65rem,7vw,6.15rem)] font-semibold leading-[0.95] tracking-tight text-balance min-[900px]:text-[clamp(3.75rem,5.8vw,5.5rem)] xl:text-[clamp(4.2rem,6.2vw,6.15rem)]"
             >
               {headlineLead.trim()}
               <br />
@@ -156,8 +156,8 @@ export function Hero({
                 href={profile.resumeUrl}
                 className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:gap-3 hover:shadow-[0_10px_40px_-10px_var(--color-primary)]"
               >
-                Download résumé
-                <ArrowDownRight className="h-4 w-4 transition-transform group-hover:rotate-[-45deg]" />
+                Download resume
+                <ArrowDownRight className="h-4 w-4 transition-transform group-hover:-rotate-45" />
               </a>
               <a
                 href="#work"
@@ -178,19 +178,19 @@ export function Hero({
                     className="group relative grid h-11 w-11 place-items-center overflow-hidden rounded-full border border-border transition-colors hover:border-primary"
                   >
                     <span className="absolute inset-0 origin-bottom scale-y-0 bg-primary transition-transform duration-300 group-hover:scale-y-100" />
-                    <Icon className="relative h-4 w-4 transition-colors group-hover:text-primary-foreground" />
+                    <Icon className="relative h-5 w-5 transition-colors group-hover:text-primary-foreground" />
                   </a>
                 );
               })}
             </div>
           </div>
 
-          <div className="order-2 mx-auto flex w-full max-w-[420px] flex-col items-center gap-7 min-[900px]:mx-0 min-[900px]:items-end">
+          <div className="order-2 mx-auto flex w-full max-w-420px flex-col items-center gap-7 min-[900px]:mx-0 min-[900px]:items-end">
             {/* Portrait */}
             <div>
               <div className="relative">
-                <div className="absolute -inset-6 rounded-full bg-gradient-to-br from-primary/30 via-transparent to-transparent blur-2xl" />
-                <div className="relative aspect-square w-72 overflow-hidden rounded-full border border-primary/40 sm:w-[21rem] min-[900px]:w-80 xl:w-96">
+                <div className="absolute -inset-6 rounded-full bg-linear-to-br from-primary/30 via-transparent to-transparent blur-2xl" />
+                <div className="relative aspect-square w-72 overflow-hidden rounded-full border border-primary/40 sm:w-84 min-[900px]:w-80 xl:w-96">
                   <Image
                     src={profile.photoUrl}
                     alt={`Portrait of ${profile.name}`}
@@ -224,7 +224,7 @@ export function Hero({
       </div>
 
       {/* Marquee */}
-      <div className="relative mt-14 overflow-hidden border-y border-border py-4 sm:mt-16 lg:mt-[4.5rem]">
+      <div className="relative mt-14 overflow-hidden border-y border-border py-4 sm:mt-16 lg:mt-18">
         <div className="flex whitespace-nowrap marquee">
           {Array.from({ length: 2 }).map((_, i) => (
             <div
@@ -233,13 +233,18 @@ export function Hero({
             >
               {[
                 "TypeScript",
+                "Next.js",
+                "JavaScript",
                 "React",
                 "Node.js",
                 "PostgreSQL",
-                "Rust",
-                "AWS",
-                "Design systems",
-                "Edge compute",
+                "Docker",
+                "GO",
+                "Express.js",
+                "REST API",
+                "Prisma ORM",
+                "Stripe Checkout",
+                "FastAPI",
               ].map((w) => (
                 <span key={w} className="flex items-center gap-10">
                   <span className="text-muted-foreground">{w}</span>
@@ -252,20 +257,32 @@ export function Hero({
       </div>
 
       {featuredSkills.length ? (
-        <div className="mx-auto mt-5 grid max-w-7xl grid-cols-3 gap-2 px-4 sm:mt-6 sm:grid-cols-4 sm:px-6 md:grid-cols-6 lg:grid-cols-12">
+        <div className="mx-auto mt-10 grid max-w-7xl grid-cols-3 gap-5 px-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-6 2xl:grid-cols-6">
           {featuredSkills.map((skill) => {
             const tech = getTechIcon(skill);
             if (!tech) return null;
+
             const Icon = tech.icon;
 
             return (
               <div
                 key={skill.id}
-                className="group flex items-center gap-2 rounded-full border border-border bg-card/50 px-3 py-2"
                 title={skill.name}
+                className="group flex flex-col items-center justify-center"
               >
-                <Icon className="h-4 w-4 shrink-0" style={{ color: tech.color }} />
-                <span className="truncate font-mono-tight text-[10px] uppercase tracking-widest text-muted-foreground group-hover:text-foreground">
+                {/* Icon Box */}
+                <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-border/70 bg-card/60 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_0_30px_rgba(255,215,0,0.18)]">
+                  {/* Glow */}
+                  <div className="absolute inset-0 rounded-2xl bg-primary/5 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-100" />
+
+                  <Icon
+                    className="relative h-10 w-10 transition-transform duration-300 group-hover:scale-110"
+                    style={{ color: tech.color }}
+                  />
+                </div>
+
+                {/* Skill Name */}
+                <span className="mt-3 text-center text-xs font-medium text-muted-foreground transition-colors duration-300 group-hover:text-foreground">
                   {skill.name}
                 </span>
               </div>
@@ -279,7 +296,7 @@ export function Hero({
 
 function Stat({ k, v }: { k: string; v: string }) {
   return (
-    <div className="max-w-[220px]">
+    <div className="max-w-55">
       <div className="font-display text-4xl font-semibold text-primary">{k}</div>
       <div className="mt-1 text-sm text-muted-foreground">{v}</div>
     </div>

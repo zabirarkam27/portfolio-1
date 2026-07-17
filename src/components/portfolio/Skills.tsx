@@ -41,7 +41,7 @@ export function Skills({ groups, tags }: { groups: SkillGroup[]; tags: string[] 
                       <span>{s.name}</span>
                       <span className="font-mono-tight text-xs text-muted-foreground">{s.lvl}</span>
                     </div>
-                    <div className="h-[3px] w-full overflow-hidden rounded-full bg-border/60">
+                    <div className="h-0.75 w-full overflow-hidden rounded-full bg-border/60">
                       <motion.div
                         initial={{ width: 0 }}
                         whileInView={{ width: `${s.lvl}%` }}
