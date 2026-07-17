@@ -30,7 +30,7 @@ export function Projects({ projects }: { projects: Project[] }) {
             transition={{ duration: 0.6, delay: i * 0.08 }}
             className="group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-card transition-all hover:-translate-y-1 hover:border-primary/40"
           >
-            <div className="relative aspect-[4/3] overflow-hidden">
+            <div className="relative aspect-4/3 overflow-hidden">
               <Image
                 src={p.imageUrl}
                 alt={p.name}
